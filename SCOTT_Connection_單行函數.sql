@@ -208,7 +208,7 @@ EXTRACT(DAY FROM DATE '1970-06-30') 日
 FROM dual;
 
 
--- TO_TIMESTAMP():字串轉換日期格式
+-- TO_TIMESTAMP():字串轉換日期格式。時間戳
 SELECT TO_TIMESTAMP('1970-06-30 02:12:14','yyyy-mm-dd hh24:mi:ss') FROM dual;
 
 SELECT 
@@ -217,4 +217,121 @@ TO_TIMESTAMP('1974-02-02 06:03:12','yyyy-mm-dd hh24:mi:ss')) DAYS
 FROM dual;
 
 
--- 
+-- ※單行函數-轉換函數
+
+-- TO_CHAR(日期數據,轉換格式):將數據類型轉換成字串
+SELECT SYSDATE, TO_CHAR(SYSDATE,'YYYY-MM-DD'),
+TO_CHAR(SYSDATE,'YYYY-MM-DD HH24:MI:SS'),
+TO_CHAR(SYSDATE,'FMYYYY-MM-DD HH24:MI:SS') 去掉查詢後前導0 
+FROM dual;
+
+
+-- 查詢出所有在每年2月份雇用的員工訊息
+SELECT * FROM emp WHERE TO_CHAR(hiredate,'MM')='02';
+SELECT * FROM emp WHERE TO_CHAR(hiredate,'MM')=2;
+
+
+-- 將每個員工的雇用期進行格式化顯示，要求所的雇用日期可以按照"年-月-日"的形式也可以將雇用的
+-- 年、月、日拆開分別顯示。
+SELECT empno, ename, hiredate,
+TO_CHAR(hiredate,'YYYY-MM-DD') 格式化雇用時間,
+TO_CHAR(hiredate,'YYYY') 格式化雇用年,
+TO_CHAR(hiredate,'MM') 格式化雇用月,
+TO_CHAR(hiredate,'DD') 格式化雇用日
+FROM emp;
+
+
+-- 另一種格式化時間
+SELECT empno, ename, hiredate,
+TO_CHAR(hiredate,'YEAR-MONTH-DY') 格式化雇用時間
+FROM emp;
+
+
+-- TO_CHAR()對數字的格式化
+SELECT TO_CHAR(987654321.123,'999,999,999,999,999.99999'),
+TO_CHAR(987654321.123,'000,000,000,000,000.00000')
+FROM dual;
+
+SELECT TO_CHAR(987654321.123,'L999,999,999,999,999.99999') 顯示貨幣,
+TO_CHAR(987654321.123,'$000,000,000,000,000.00000') 顯示美元
+FROM dual;
+
+
+-- TO_DATE():將字串轉成日期數據類型
+SELECT TO_DATE('1970-06-03','YYYY-MM-DD')
+FROM dual;
+
+
+-- TO_NUMBER():將字串轉成數字
+SELECT TO_NUMBER('09')+TO_NUMBER('19') 加法操作,
+TO_NUMBER('09') * TO_NUMBER('19') 乘法操作
+FROM dual;
+-- Oracle支持自動轉型
+SELECT '09' + '19' 加法操作,
+'09' * '19' 乘法操作
+FROM dual;
+
+
+-- ※單行函數-通用函數
+
+-- NVL(目標值,若為空要顯示的值):使用NVL()函數處理null
+-- 要求查詢出每個員工的編號、姓名、職位、雇用日期、年薪
+SELECT ename, empno, job, hiredate, (sal+NVL(comm,0))*12 年薪, sal, comm FROM emp;
+
+
+-- NVL2()
+SELECT ename, empno, job, hiredate, NVL2(comm,(sal+comm),sal)*12 年薪, sal, comm FROM emp;
+
+
+-- NULLIF():判斷兩個表達式的結果是否相等，相等返回null，不相等返回表達式一
+SELECT  NULLIF(1,1), NULLIF(1,2) FROM dual;
+
+SELECT  empno, ename, job, LENGTH(ename), LENGTH(job),
+NULLIF(LENGTH(ename),LENGTH(job)) NULLIF 
+FROM emp;
+
+
+-- DECODE(列|表達式,值1,輸出結果,值2,輸出結果,...,默認值):
+-- 類似於if...else，但是判斷的內容都是一個具體的值
+SELECT  DECODE(2,1,'內容為一',2,'內容為二'),
+DECODE(2,1,'內容為一','沒有滿足條件')
+FROM dual;
+
+
+-- 要求可以查詢員工的姓名、職位、基本工資等訊息，但是要求將所有的職位訊息都替換成中文顯示
+SELECT  
+ename, sal, 
+DECODE(job,'CLERK','業務員' ,
+'SALESMAN','銷售員',
+'MANAGER','經理',
+'ANALYST','分析員',
+'PRESIDENT','總裁') job 
+FROM emp;
+
+
+-- CASE [expr]
+--    WHEN  comp_expr  THEN  return_expr
+--    [WHEN comp_expr THEN return_expr]
+--    [ELSE   else_expr]
+-- END; 
+
+-- 顯示每個員工的姓名、工資、職位，同事顯示新的工資(新工資的標準為:辦事員增長10%、
+-- 銷售員增長20%、經理增長30%、其他職位的人增長50$)
+SELECT  
+ename, sal, 
+CASE job WHEN 'CLERK' THEN sal * 1.1
+  WHEN 'SALSEMAN' THEN sal * 1.2
+  WHEN 'MANAGER' THEN sal * 1.3
+ELSE sal * 1.5
+END 新工資 
+FROM emp;
+
+
+-- COALESCE(表達式1,表達式2,表達式3,...表達式n):對null進行操作，採用依次判斷表達式的方式
+-- 完成，如果表達式1為null，則顯示表達式2的內容，如果表達式2為null，則顯示表達式3的內容，
+-- 依次類推，判斷到最後如果還是null，則最終的顯示結果就是null。
+SELECT ename, sal, comm,
+COALESCE(comm,100,2000),
+COALESCE(comm,null,2000),
+COALESCE(comm,null,null)
+FROM emp;

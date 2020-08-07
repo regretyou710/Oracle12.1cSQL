@@ -116,5 +116,105 @@ SELECT MOD(10,3) FROM dual;
 
 -- ※單行函數-日期函數
 
+-- SYSDATE:取得系統當前日期。默認情況下顯示內容只包含年、月、日，如果想顯示更多數據，那麼
+-- 需修改語言環境。ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';
+-- 重新連線後就恢復默認格式
+ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';
+SELECT SYSDATE FROM dual;
+
+
+-- 日期操作公式:
+-- 日期 - 數字 = 日期
+-- 日期 + 數字 = 日期
+-- 日期 - 日期 = 數字
+-- 不存在(日期 + 日期)的計算
+SELECT SYSDATE+3 三天之後的日期,
+SYSDATE-3 三天之前的日期
+FROM dual;
+
+
+-- 查詢出每個員工的到今天為止的雇用天數，以及十天前每個員工的雇用天數
+-- 其中使用TRUNC()函數來捨棄小數點
+SELECT ename,
+empno,
+TRUNC(SYSDATE-hiredate) 今天為止的雇用天數,
+TRUNC((SYSDATE-10)-hiredate) 十天前的雇用天數
+FROM emp;
+
+
+-- ADD_MONTHS():加上n個月或加上-n個月
+SELECT ADD_MONTHS(SYSDATE,3),
+ADD_MONTHS(SYSDATE,-3),
+ADD_MONTHS(SYSDATE,60)
+FROM dual;
+
+
+-- 要求顯示所有員工被雇用三個月之後的日期
+SELECT ename,empno, job, sal, hiredate, ADD_MONTHS(hiredate,3)FROM emp;
+
+
+-- NEXT_DAY():
+SELECT SYSDATE, NEXT_DAY(SYSDATE,'星期三') 下一個星期三 FROM dual;
+
+
+-- LAST_DAY():指定日期所在月份的最後一天
+SELECT SYSDATE, LAST_DAY(SYSDATE) FROM dual;
+
+
+-- 查詢所有是在其雇用所在月的倒數第三天被公司雇用的完整員工訊息
+SELECT ename, empno, job, hiredate, LAST_DAY(hiredate) 
+FROM emp WHERE hiredate=LAST_DAY(hiredate)-3;
+
+
+-- MONTHS_BETWEEN():取的兩個日期之間所經歷過的月份間格
+-- 查詢出每個員工編號、姓名、雇用日期、雇用的月數及年份
+SELECT empno, ename, hiredate,
+TRUNC(MONTHS_BETWEEN(SYSDATE,hiredate)) 雇用總月數,
+TRUNC(MONTHS_BETWEEN(SYSDATE,hiredate)/12) 雇用總年數
+FROM emp;
+
+
+-- 查詢出每個員工的編號、姓名、雇用日期、已雇用的年數、月數、天數
+-- 在MONTHS_BETWEEN(SYSDATE,hiredate)/12計算後的小數指的是不滿一年的月數
+SELECT empno, ename, hiredate,
+TRUNC(MONTHS_BETWEEN(SYSDATE,hiredate)/12) || '年' ||
+TRUNC(MOD(MONTHS_BETWEEN(SYSDATE,hiredate),12)) || '個月' ||
+TRUNC(SYSDATE-ADD_MONTHS(hiredate,MONTHS_BETWEEN(SYSDATE,hiredate))) || '天' 已雇用的時間
+FROM emp;
+
+
+-- EXTRACT()
+-- 從日期時間中取得年、月、日數據
+SELECT 
+EXTRACT(YEAR FROM SYSDATE) 年,
+EXTRACT(MONTH FROM SYSDATE) 月,
+EXTRACT(DAY FROM SYSDATE) 日 
+FROM dual;
+
+SELECT 
+EXTRACT(YEAR FROM SYSTIMESTAMP) 年,
+EXTRACT(MONTH FROM SYSTIMESTAMP) 月,
+EXTRACT(DAY FROM SYSTIMESTAMP) 日,
+EXTRACT(HOUR FROM SYSTIMESTAMP) 時,
+EXTRACT(MINUTE FROM SYSTIMESTAMP) 分,
+EXTRACT(SECOND FROM SYSTIMESTAMP) 秒
+FROM dual;
+
+-- 自訂日期
+SELECT 
+EXTRACT(YEAR FROM DATE '1970-06-30') 年,
+EXTRACT(MONTH FROM DATE '1970-06-30') 月,
+EXTRACT(DAY FROM DATE '1970-06-30') 日 
+FROM dual;
+
+
+-- TO_TIMESTAMP():字串轉換日期格式
+SELECT TO_TIMESTAMP('1970-06-30 02:12:14','yyyy-mm-dd hh24:mi:ss') FROM dual;
+
+SELECT 
+EXTRACT(DAY FROM TO_TIMESTAMP('1980-06-30 02:12:14','yyyy-mm-dd hh24:mi:ss') -
+TO_TIMESTAMP('1974-02-02 06:03:12','yyyy-mm-dd hh24:mi:ss')) DAYS 
+FROM dual;
+
+
 -- 
-SELECT FROM ;

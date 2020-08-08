@@ -157,3 +157,134 @@ WHERE comm IS NULL
 
 
 -- ※分組統計查詢-多欄位分組統計
+
+-- 要求查詢出每個部門的詳細訊息
+-- 分析:
+-- 必須包含的欄位:部門編號、名稱、位置
+-- 額外欄位:平均工資、總工資、最高工資、最低工資、部門人數
+-- 確定所需的資料表:dept表、emp表
+-- 確定已知關聯欄位:dept.deptno=emp.deptno
+-- 步驟一:
+SELECT 
+d.deptno, 
+d.dname, 
+d.loc,
+e.sal, 
+e.empno 
+FROM dept d, emp e 
+WHERE d.deptno=e.deptno
+;
+-- 由上查詢結果顯示deptno、dname、loc三行都在重複，所有具備分組的條件
+-- 步驟二:
+SELECT 
+d.deptno, 
+d.dname, 
+d.loc,
+AVG(e.sal) 平均工資, 
+SUM(e.sal) 總工資 , 
+MAX(e.sal) 最高工資 , 
+MIN(e.sal) 最低工資 , 
+COUNT(e.empno) 部門人數 
+FROM dept d, emp e 
+WHERE d.deptno=e.deptno
+GROUP BY d.deptno, d.dname, d.loc
+;
+-- 由上查詢結果只顯示出3個部門，所以需使用外連接達到顯示出4個部門
+-- 步驟三:
+SELECT 
+d.deptno, 
+d.dname, 
+d.loc,
+ROUND(AVG(e.sal),2) 平均工資, 
+SUM(e.sal) 總工資 , 
+MAX(e.sal) 最高工資 , 
+MIN(e.sal) 最低工資 , 
+COUNT(e.empno) 部門人數 
+FROM dept d, emp e 
+WHERE d.deptno=e.deptno(+)
+GROUP BY d.deptno, d.dname, d.loc
+;
+-- 步驟四:處理資料為空的欄位
+SELECT 
+d.deptno, 
+d.dname, 
+d.loc,
+NVL(ROUND(AVG(e.sal),2),0) 平均工資, 
+NVL(SUM(e.sal),0) 總工資 , 
+NVL(MAX(e.sal),0) 最高工資 , 
+NVL(MIN(e.sal),0) 最低工資 , 
+COUNT(e.empno) 部門人數 
+FROM dept d, emp e 
+WHERE d.deptno=e.deptno(+)
+GROUP BY d.deptno, d.dname, d.loc
+;
+
+
+-- ※分組統計查詢-HAVING子句
+-- HAVING():對分組後的數據進行過濾
+-- HAVING子句一定要與GROUP BY子句一起使用
+-- 子句執行順序:FROM、WHERE、GROUP BY、HAVING、SELECT、ORDER BY
+-- 因為GROUP BY、HAVING都在SELECT之前所以無法使用SELECT中的別名
+-- ▲對於HAVING和WHERE的區別:
+-- WHERE:是在分組之前使用(可以沒有GROUP BY)，不允許使用統計函數
+-- HAVING:是在分組之後使用(必須結合GROUP BY)，允許使用統計函數
+
+-- 查詢出所有平均工資大於2000的職位訊息、平均工資、員工人數
+SELECT 
+e.job, 
+e.sal, 
+e.empno 員工人數 
+FROM emp e 
+;
+-- 無法使用WHERE進行條件過濾，因為WHERE子句執行優先於GROUP BY子句，而且不允許使用統計函數
+SELECT 
+e.job, 
+ROUND(AVG(e.sal),2) 平均工資, 
+COUNT(e.empno) 員工人數 
+FROM emp e 
+WHERE ROUND(AVG(e.sal),2)>2000 
+GROUP BY e.job
+;
+
+SELECT 
+e.job, 
+ROUND(AVG(e.sal),2) 平均工資, 
+COUNT(e.empno) 員工人數 
+FROM emp e 
+GROUP BY e.job 
+HAVING ROUND(AVG(e.sal),2)>2000
+;
+
+
+-- 列出至少有一個員工的所有部門編號、名稱，並統計出這些部門的平均工資、最低工資、最高工資
+SELECT d.deptno, d.dname, e.sal FROM emp e,dept d WHERE e.deptno(+)=d.deptno;
+
+SELECT 
+d.deptno, 
+d.dname, 
+ROUND(AVG(e.sal),2) 平均工資 , 
+MIN(e.sal) 最低工資 , 
+MAX(e.sal) 最高工資 
+FROM emp e,dept d 
+WHERE e.deptno(+)=d.deptno 
+GROUP BY d.deptno, d.dname
+HAVING COUNT(e.empno)>1
+;
+
+
+-- 顯示非銷售人員工作名稱以及從事同一工作員工的月工資的總和，並且要滿足從事同一工作的員工
+-- 的月工資合計大於5000，輸出結果按月工資的合計升序排列。
+-- 步驟一:顯示非銷售人員工作名稱
+SELECT e.job FROM emp e WHERE e.job!='SALESMAN';
+-- 步驟二:從事同一工作員工的月工資的總和，進行統計分組
+SELECT e.job , SUM(e.sal) 工資總和 FROM emp e WHERE e.job!='CLERK' GROUP BY e.job;
+-- 步驟三:針對分組後的工資總和進行過濾與排序
+SELECT 
+e.job, 
+SUM(e.sal) 工資總和 
+FROM emp e
+WHERE e.job!='SALESMAN' 
+GROUP BY e.job 
+HAVING SUM(e.sal)>5000
+ORDER BY 工資總和
+;

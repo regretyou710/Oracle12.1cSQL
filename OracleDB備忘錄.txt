@@ -1,0 +1,72 @@
+-- Oracle sqlplus.exe常用操作命令
+
+-- 如何重置密碼 oracle sys和system
+①	打開cmd介面，輸入sqlplus /nolog
+② 	在dos窗口中輸入 conn/@orcl as sysdba; 注意：orcl是你的資料庫實例。
+③-1在dos窗口中輸入 alter user sys identified by change_on_install;
+③-2在dos窗口中輸入 alter user system identified by manager;
+
+
+
+
+-- 設置每行顯示n個字元
+SET LINESIZE n個字元;
+
+-- 設置每頁的顯示數據長度
+SET PAGESIZE n個長度;
+
+
+-- 記事本命令，創建一個.sql檔案(在內容寫入執行語句後存檔)
+ed 檔案名稱;
+-- 執行記事本命令
+@檔案名稱;
+
+
+-- 切換用戶(普通用戶不須加AS SYSDBA)
+CONN 用戶名/密碼 [AS SYSDBA]
+ex:使用sys登入
+CONN sys/change_on_install AS SYSDBA;
+
+
+-- 查看當前用戶
+SHOW USER;
+
+
+-- 在登入sys用戶下查詢c##scott的emp表單
+SELECT * FROM c##scott.emp;
+
+
+-- 查看用戶底下所擁有的表單
+SELECT * FROM tab;
+
+
+-- 局部格式化表單
+COL tname FOR A20;
+COL tabtype FOR A20;
+COL clusterid FOR A20;
+
+
+-- 查看所有使用者
+select * from all_users;
+
+
+-- 查看表單結構
+DESC "表單名稱";
+
+
+-- 在sqlplus.exe中調用本地端指令
+ex:HOST ipconfig
+
+
+-- CDB切換到PDB
+SELECT username FROM dba_users WHERE username='SCOTT' OR username='SH';
+SHOW CON_NAME;
+ALTER PLUGGABLE DATABASE ALL OPEN;
+①	打開cmd介面，輸入sqlplus /nolog
+②	使用sys登入。CONN sys/change_on_install AS SYSDBA;
+③	切換到PDB中。ALTER SESSION SET CONTAINER=pdborcl;
+④	打開pdb數據庫。ALTER DATABASE pdborcl OPEN;
+⑤	查看sh用戶資料表內容。SELECT COUNT(*) FROM sh.sales;
+
+
+imp system/manager@localhost:1521/pdborcl fromuser=SCOTT touser=SCOTT file=C:\Users\user\Desktop\SCOTT.dmp

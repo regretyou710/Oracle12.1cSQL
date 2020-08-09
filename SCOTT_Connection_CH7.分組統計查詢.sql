@@ -1,40 +1,45 @@
--- ※分組統計查詢-統計函數
-
--- 查找出公司每個月支出的月工資的總和
+--============================================================================--
+--                                                                            --
+/* ※分組統計查詢-統計函數                                                       */
+--                                                                            --
+--============================================================================--
+-- ex:查找出公司每個月支出的月工資的總和
 SELECT SUM(sal)FROM emp;
 
--- 查詢出公司的最高工資、最低工資、平均工資
+-- ex:查詢出公司的最高工資、最低工資、平均工資
 SELECT MAX(sal), MIN(sal), ROUND(AVG(sal),2) FROM emp;
 
 
--- 統計出公司最早雇用和最晚雇用的雇用日期
+-- ex:統計出公司最早雇用和最晚雇用的雇用日期
 SELECT MIN(hiredate) 最早雇用, MAX(hiredate) 最晚雇用 FROM emp;
 
 
--- 統計公司工資之中中間的工資值
+-- ex:統計公司工資之中中間的工資值
 SELECT MEDIAN(sal) FROM emp;
 
 
--- 統計工資的標準差與變異數(方差)
+-- ex:統計工資的標準差與變異數(方差)
 SELECT STDDEV(sal), VARIANCE(sal) FROM emp;
 
 
-
--- 統計出公司的雇用人數
+-- ex:統計出公司的雇用人數
 SELECT COUNT(empno), COUNT(*) FROM emp;
 
 
--- COUNT():對於COUNT()函數而言，可以傳遞三類內容 1.* 2.欄位 3.DISTINCT 欄位 
--- 如果使用COUNT(欄位)的時候，資料內容為null，那麼null不會進行統計。
--- 如果使用COUNT(DISTINCT 欄位)，如果列上有重複，重複的紀錄也不統計。
--- 使用COUNT(*)最為方便，但建議使用COUNT(欄位)，使一個不可能為null的列進行統計。例如:主鍵。
+-- ➤COUNT():對於COUNT()函數而言，可以傳遞三類內容 1.* 2.欄位 3.DISTINCT 欄位 
+--   ①如果使用COUNT(欄位)的時候，資料內容為null，那麼null不會進行統計。
+--   ②如果使用COUNT(DISTINCT 欄位)，如果列上有重複，重複的紀錄也不統計。
+--   ③使用COUNT(*)最為方便，但建議使用COUNT(欄位)，使一個不可能為null的列進行統計。
+--     例如:主鍵。
 -- 所有的統計函數中，只有COUNT()函數可以在表中沒有任何數據時依然返回內容。
 SELECT COUNT(*), COUNT(empno), COUNT(ename), COUNT(comm)
 , COUNT(DISTINCT job) FROM emp;
-
-
--- ※分組統計查詢-單欄位分組統計
--- GROUP BY
+--============================================================================--
+--                                                                            --
+/* ※分組統計查詢-單欄位分組統計                                                 */ 
+--                                                                            --
+--============================================================================--
+-- ➤GROUP BY
 -- 執行子句順序:FROM、WHERE、GROUP BY、SELECT、ORDER BY
 -- ▲注意事項一:
 -- 如果在一個查詢之中不存在GROUP BY子句，那麼在SELECT子句之中指允許出現統計函數，其他任何
@@ -44,15 +49,15 @@ SELECT deptno, COUNT(empno) FROM emp;
 -- 正確程序:
 SELECT deptno, COUNT(empno) FROM emp GROUP BY deptno;
 -- ▲注意事項二:
--- 在統計查詢之中(存在了GROUP BY子句)，SELECT子句之中只允許出現分組欄位(GROUP BY之後定義的
--- 欄位)和統計函數，其他的任何欄位都不允許出現。故，在進行分組操作的時候，遵守一個原則:
+-- 在統計查詢之中(存在了GROUP BY子句)，SELECT子句之中只允許出現分組欄位(GROUP BY之後定義
+-- 的欄位)和統計函數，其他的任何欄位都不允許出現。故，在進行分組操作的時候，遵守一個原則:
 -- GROUP BY子句之中允許出現的欄位才是在SELECT子句之中允許出現的欄位。
 -- 錯誤程序:
 SELECT deptno, ename, COUNT(empno) FROM emp GROUP BY deptno;
 -- 正確程序:
 SELECT deptno, COUNT(empno) FROM emp GROUP BY deptno;
--- ▲注意事項三:所有統計函數允許嵌套使用。但是一旦使用了嵌套的統計函數之後，SELECT子句之中不
--- 允許再出現任何的欄位，包括分組欄位。
+-- ▲注意事項三:所有統計函數允許嵌套使用。但是一旦使用了嵌套的統計函數之後，SELECT子句之中
+-- 不允許再出現任何的欄位，包括分組欄位。
 -- ex:求出每個部門平均工資最高的工資
 -- 此時因為SELECT子句之中存在了deptno的欄位，所以出現錯誤(ORA-00937: 不是單一群組的群組函數)。
 SELECT deptno, MAX(AVG(sal)) FROM emp GROUP BY deptno;
@@ -60,15 +65,15 @@ SELECT deptno, MAX(AVG(sal)) FROM emp GROUP BY deptno;
 SELECT MAX(AVG(sal)) FROM emp GROUP BY deptno;
 
 
--- 統計出每個部門的人數
+-- ex:統計出每個部門的人數
 SELECT deptno, COUNT(empno) FROM emp GROUP BY deptno;
 
 
--- 統計出每種職位的最低最高工資
+-- ex:統計出每種職位的最低最高工資
 SELECT job, MIN(sal), MAX(sal) FROM emp GROUP BY job;
 
 
--- 查詢每個部門的名稱、部門人數、部門平均工資、平均服務年限
+-- ex:查詢每個部門的名稱、部門人數、部門平均工資、平均服務年限
 -- 分析:
 -- 平均服務年限需要計算出年的概念，所以使用MONTHS_BETWEEN()函數
 -- 確定所需要的資料表:
@@ -102,7 +107,7 @@ TRUNC(AVG(MONTHS_BETWEEN(SYSDATE,e.hiredate)/12)) 平均服務年限
 FROM dept d,emp e WHERE d.deptno=e.deptno(+) GROUP BY d.dname;
 
 
--- 查詢公司各個工資等級員工數量、平均工資
+-- ex:查詢公司各個工資等級員工數量、平均工資
 -- 先使用salgrade和emp進行關聯查詢
 SELECT 
 s.grade, 
@@ -126,7 +131,7 @@ GROUP BY s.grade
 ;
 
 
--- 統計出領取佣金與不領取佣金的員工平均工資、平均雇用年限、員工人數
+-- ex:統計出領取佣金與不領取佣金的員工平均工資、平均雇用年限、員工人數
 SELECT 
 e.comm, 
 COUNT(e.empno) 員工人數 , 
@@ -154,11 +159,12 @@ TRUNC(AVG(MONTHS_BETWEEN(SYSDATE,e.hiredate)/12)) 平均雇用年限
 FROM emp e
 WHERE comm IS NULL
 ;
-
-
--- ※分組統計查詢-多欄位分組統計
-
--- 要求查詢出每個部門的詳細訊息
+--============================================================================--
+--                                                                            --
+/* ※分組統計查詢-多欄位分組統計                                                 */ 
+--                                                                            --
+--============================================================================--
+-- ex:要求查詢出每個部門的詳細訊息
 -- 分析:
 -- 必須包含的欄位:部門編號、名稱、位置
 -- 額外欄位:平均工資、總工資、最高工資、最低工資、部門人數
@@ -218,10 +224,12 @@ FROM dept d, emp e
 WHERE d.deptno=e.deptno(+)
 GROUP BY d.deptno, d.dname, d.loc
 ;
-
-
--- ※分組統計查詢-HAVING子句
--- HAVING():對分組後的數據進行過濾
+--============================================================================--
+--                                                                            --
+/* ※分組統計查詢-HAVING子句                                                    */ 
+--                                                                            --
+--============================================================================--
+-- ➤HAVING:對分組後的數據進行過濾
 -- HAVING子句一定要與GROUP BY子句一起使用
 -- 子句執行順序:FROM、WHERE、GROUP BY、HAVING、SELECT、ORDER BY
 -- 因為GROUP BY、HAVING都在SELECT之前所以無法使用SELECT中的別名
@@ -229,7 +237,7 @@ GROUP BY d.deptno, d.dname, d.loc
 -- WHERE:是在分組之前使用(可以沒有GROUP BY)，不允許使用統計函數
 -- HAVING:是在分組之後使用(必須結合GROUP BY)，允許使用統計函數
 
--- 查詢出所有平均工資大於2000的職位訊息、平均工資、員工人數
+-- ex:查詢出所有平均工資大於2000的職位訊息、平均工資、員工人數
 SELECT 
 e.job, 
 e.sal, 
@@ -256,7 +264,7 @@ HAVING ROUND(AVG(e.sal),2)>2000
 ;
 
 
--- 列出至少有一個員工的所有部門編號、名稱，並統計出這些部門的平均工資、最低工資、最高工資
+-- ex:列出至少有一個員工的所有部門編號、名稱，並統計出這些部門的平均工資、最低工資、最高工資
 SELECT d.deptno, d.dname, e.sal FROM emp e,dept d WHERE e.deptno(+)=d.deptno;
 
 SELECT 
@@ -272,8 +280,8 @@ HAVING COUNT(e.empno)>1
 ;
 
 
--- 顯示非銷售人員工作名稱以及從事同一工作員工的月工資的總和，並且要滿足從事同一工作的員工
--- 的月工資合計大於5000，輸出結果按月工資的合計升序排列。
+-- ex:顯示非銷售人員工作名稱以及從事同一工作員工的月工資的總和，並且要滿足從事同一工作的員
+-- 工的月工資合計大於5000，輸出結果按月工資的合計升序排列。
 -- 步驟一:顯示非銷售人員工作名稱
 SELECT e.job FROM emp e WHERE e.job!='SALESMAN';
 -- 步驟二:從事同一工作員工的月工資的總和，進行統計分組

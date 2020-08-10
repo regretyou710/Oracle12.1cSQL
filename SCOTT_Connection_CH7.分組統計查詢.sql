@@ -42,7 +42,7 @@ SELECT COUNT(*), COUNT(empno), COUNT(ename), COUNT(comm)
 -- ➤GROUP BY
 -- 執行子句順序:FROM、WHERE、GROUP BY、SELECT、ORDER BY
 -- ▲注意事項一:
--- 如果在一個查詢之中不存在GROUP BY子句，那麼在SELECT子句之中指允許出現統計函數，其他任何
+-- 如果在一個查詢之中不存在GROUP BY子句，那麼在SELECT子句之中只允許出現統計函數，其他任何
 -- 的欄位都不允許出現。
 -- 錯誤程序:
 SELECT deptno, COUNT(empno) FROM emp;

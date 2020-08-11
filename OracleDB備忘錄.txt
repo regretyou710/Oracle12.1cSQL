@@ -70,3 +70,8 @@ ALTER PLUGGABLE DATABASE ALL OPEN;
 
 
 imp system/manager@localhost:1521/pdborcl fromuser=SCOTT touser=SCOTT file=C:\Users\user\Desktop\SCOTT.dmp
+
+
+
+-- 顯示更多時間訊息
+ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';

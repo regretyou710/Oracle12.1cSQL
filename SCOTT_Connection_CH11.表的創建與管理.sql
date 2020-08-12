@@ -330,6 +330,9 @@ SELECT * FROM user_tab_columns WHERE table_name='MYTAB';
 --              Sysaux表空間。
 -- ②非系統表空間:由具備指定管理員權限的數據庫用戶創建，主要用於保存用戶數據、索
 --                引等數據庫對象，例如:USERS、TEMP、UNDOTBS1等表空間。
+-- ▲數據表受到表空間的管理。
+-- ▲表空間分為兩類:數據表空間、臨時表空間。
+
 
 
 -- ➤創建表空間

@@ -3,14 +3,14 @@
 /* ※單行函數-字串函數                                                        */
 --                                                                            --
 --============================================================================--
--- 在Oracle中所有的驗證操作必須存在在完整的SQL語句之中，所以如果現在只是進行
--- 功能驗證，使用的是一張具體的表，可利用dual虛擬表進行操作。
+-- 在Oracle中所有的驗證操作必須存在在完整的SQL語句之中，所以如果現在只是進行功能驗證，
+-- 使用的是一張具體的表，可利用dual虛擬表進行操作。
 -- ➤UPPER():內容轉成大寫、LOWER():內容轉成小寫
 SELECT UPPER('OracleDataBase'),LOWER('OracleDataBase') FROM dual;
 
 
--- ex:查詢員工姓名是'smith'的完整訊息，但是由於失誤，沒有考慮到數據的大小寫
--- 問題，此時可以使用UPPER()函數將全部內容轉為大寫。
+-- ex:查詢員工姓名是'smith'的完整訊息，但是由於失誤，沒有考慮到數據的大小寫問題，此時可
+-- 以使用UPPER()函數將全部內容轉為大寫。
 SELECT * FROM emp WHERE ename=UPPER('smith');
 
 
@@ -119,9 +119,8 @@ SELECT MOD(10,3) FROM dual;
 /* ※單行函數-日期函數                                                        */
 --                                                                            --
 --============================================================================--
--- SYSDATE:取得系統當前日期。默認情況下顯示內容只包含年、月、日，如果想顯示
--- 更多數據，那麼需修改語言環境。
--- ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';
+-- SYSDATE:取得系統當前日期。默認情況下顯示內容只包含年、月、日，如果想顯示更多
+-- 數據，那麼需修改語言環境。ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';
 -- 重新連線後就恢復默認格式
 ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';
 SELECT SYSDATE FROM dual;
@@ -333,8 +332,8 @@ FROM emp;
 --    [ELSE   else_expr]
 -- END; 
 
--- ex:顯示每個員工的姓名、工資、職位，同事顯示新的工資(新工資的標準為:辦事員
--- 增長10%、銷售員增長20%、經理增長30%、其他職位的人增長50$)
+-- ex:顯示每個員工的姓名、工資、職位，同事顯示新的工資(新工資的標準為:辦事員增長10%、
+-- 銷售員增長20%、經理增長30%、其他職位的人增長50$)
 SELECT  
 ename, sal, 
 CASE job WHEN 'CLERK' THEN sal * 1.1
@@ -345,10 +344,9 @@ END 新工資
 FROM emp;
 
 
--- ➤COALESCE(表達式1,表達式2,表達式3,...表達式n):對null進行操作，採用依次判斷
--- 表達式的方式完成，如果表達式1為null，則顯示表達式2的內容，如果表達式2為null
--- ，則顯示表達式3的內容，依次類推，判斷到最後如果還是null，則最終的顯示結果
--- 就是null。
+-- ➤COALESCE(表達式1,表達式2,表達式3,...表達式n):對null進行操作，採用依次判斷表達式的
+-- 方式完成，如果表達式1為null，則顯示表達式2的內容，如果表達式2為null，則顯示表達式3的
+-- 內容，依次類推，判斷到最後如果還是null，則最終的顯示結果就是null。
 SELECT ename, sal, comm,
 COALESCE(comm,100,2000),
 COALESCE(comm,null,2000),

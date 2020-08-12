@@ -23,8 +23,8 @@ SELECT * FROM emp WHERE ename='SMITH';
 SELECT * FROM emp WHERE job='CLERK';
 
 
--- ex:取得所有CLERK的資料後，為了和其他職位的員工對比，現在決定再查詢所有不是
--- 辦事員的員工訊息
+-- ex:取得所有CLERK的資料後，為了和其他職位的員工對比，現在決定再查詢所有不是辦事
+-- 員的員工訊息
 SELECT * FROM emp WHERE job<>'CLERK';
 SELECT * FROM emp WHERE job!='CLERK';
 
@@ -38,8 +38,7 @@ SELECT * FROM emp WHERE job='SALESMAN' AND sal>1200;
 
 
 -- ex:要求查詢出10部門中的經理或是20部門的業務員訊息
-SELECT * FROM emp 
-WHERE (deptno=10 AND job='MANAGER') OR (deptno=20 AND job='CLERK');
+SELECT * FROM emp WHERE (deptno=10 AND job='MANAGER') OR (deptno=20 AND job='CLERK');
 
 
 -- ex:查詢不是辦事員且基本工資大於2000的全部員工訊息
@@ -131,9 +130,8 @@ SELECT * FROM emp WHERE ename LIKE '______%';
 SELECT * FROM emp WHERE sal LIKE '%1%' OR hiredate LIKE '%81%';
 
 
--- ex:找出部門10中所有經理(MANAGER)，部門20中所有辦事員(CLERK)，既不是經理又
--- 不是辦事員但是其餘工資大於或等於2000的所有員工詳細資料，並且要求這些員工
--- 姓名中包含有字母'S'或字母'K'。
+-- ex:找出部門10中所有經理(MANAGER)，部門20中所有辦事員(CLERK)，既不是經理又不是辦事員
+-- 但是其餘工資大於或等於2000的所有員工詳細資料，並且要求這些員工姓名中包含有字母'S'或字母'K'。
 SELECT * FROM emp 
 WHERE ((deptno=10 AND job='MANAGER')
 OR (deptno=20 AND job='CLERK')
@@ -145,8 +143,7 @@ AND (ename LIKE '%S%' OR ename LIKE'%K%')
 /* ※※排序顯示                                                               */
 --                                                                            --
 --============================================================================--
--- ➤數據排序:ORDER BY。須注意:在所有子句中，ORDER BY子句是放在查語句最後一行
--- ，最後一個執行。
+-- ➤數據排序:ORDER BY。須注意:在所有子句中，ORDER BY子句是放在查語句最後一行，最後一個執行。
 -- 執行順序:FROM、WHERE、SELECT、ORDER BY。如此表示在ORDER BY中可以使用SELECT的別名。
 
 -- ex:查詢員工的完整訊息並按照基本工資由高到低排序
@@ -162,6 +159,5 @@ SELECT * FROM emp ORDER BY sal ASC;
 SELECT * FROM emp WHERE job='CLERK' ORDER BY sal;
 
 
--- ex:查詢出所有員工訊息，要求按照基本工資由高到低排序，如果工資相等則按照
--- 雇用日期由早到晚進行排序。
+-- ex:查詢出所有員工訊息，要求按照基本工資由高到低排序，如果工資相等則按照雇用日期由早到晚進行排序。
 SELECT * FROM emp ORDER BY sal DESC, hiredate ASC;

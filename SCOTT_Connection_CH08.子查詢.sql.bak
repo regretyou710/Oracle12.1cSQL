@@ -1,6 +1,6 @@
 --============================================================================--
 --                                                                            --
-/* ※子查詢                                                                    */
+/* ※子查詢                                                                   */
 --                                                                            --
 --============================================================================--
 -- 說明:一個完整的查詢之中定義了若干個小的查詢形成的複雜查詢。所有的子查詢在編寫
@@ -24,7 +24,7 @@ SELECT * FROM emp WHERE sal=800;
 SELECT * FROM emp WHERE sal=(SELECT MIN(sal) FROM emp);
 --============================================================================--
 --                                                                            --
-/* ※子查詢-在WHERE之中使用子查詢                                              */
+/* ※子查詢-在WHERE之中使用子查詢                                             */
 --                                                                            --
 --============================================================================--
 -- ➤子查詢返回單行單列數據
@@ -223,7 +223,7 @@ GROUP BY d.dname
 HAVING AVG(sal)=(SELECT MAX(AVG(sal)) FROM emp e GROUP BY e.deptno);
 --============================================================================--
 --                                                                            --
-/* ※子查詢-在FROM之中使用子查詢                                               */
+/* ※子查詢-在FROM之中使用子查詢                                              */
 --                                                                            --
 --============================================================================--
 -- 說明:FROM子句主要功能是確定數據來源，那麼來源都屬於數據表，表的特徵為行+列的
@@ -262,8 +262,8 @@ FROM emp e
 GROUP BY e.deptno
 ) temp 
 WHERE d.deptno=temp.deptno(+);
--- 需注意:在步驟二進行分組統計建立臨時表時，須將欄位設置別名，否則在步驟三時兩張
--- 表進行合併後要顯示需求欄位會出異常。
+-- 需注意:在步驟二進行分組統計建立臨時表時，須將欄位設置別名，否則在步驟三時兩張表進行合併
+-- 後要顯示需求欄位會出異常。
 SELECT d.deptno, d.dname, d.loc, temp.count, temp.avg 
 FROM dept d, 
 (SELECT 
@@ -274,22 +274,22 @@ FROM emp e
 GROUP BY e.deptno
 ) temp 
 WHERE d.deptno=temp.deptno(+);
--- 由以上兩種操作方式都可以實現同樣的結果，那麼該使用哪種?為了解決此問題，可以將
--- 數據擴大100倍，即:emp表中的數據為1400條紀錄，而dept表中的數據為400條紀錄。
+-- 由以上兩種操作方式都可以實現同樣的結果，那麼該使用哪種?為了解決此問題，可以將數據擴大
+-- 100倍，即:emp表中的數據為1400條紀錄，而dept表中的數據為400條紀錄。
 -- 方法一:多欄位分組實現
--- 	當dept和emp表關聯的時候一定會存在笛卡爾積，數據量 = emp表的1400條 * dpet表的
--- 	400條 = 560000條紀錄。
+-- 	當dept和emp表關聯的時候一定會存在笛卡爾積，數據量 = emp表的1400條 * dpet表的400條
+-- 	= 560000條紀錄。
 -- 方法二:子查詢
--- 	統計:emp表的1400條紀錄，而且最終的統計結果的行數不可能超過400行(在步驟二透過
--- 	部門編號分類統計，而分類只有4種*100倍)
+-- 	統計:emp表的1400條紀錄，而且最終的統計結果的行數不可能超過400行(在步驟二透過部門編
+-- 	號分類統計，而分類只有4種*100倍)
 -- 	多表關聯:dpet表的400條紀錄(步驟一的100倍) * 子查詢的最多400條紀錄(步驟二的100倍) 
 -- 	= 160000條紀錄
 -- 	最終結果:160000 + 1400 = 161400條紀錄 
 -- 所以使用子查詢可以解決多表查詢所帶來的效能問題。
 
 
--- ex:查詢出所有在"SALES"(銷售部)工作的員工的編號、姓名、基本工資、獎金、職位、
--- 雇用日期、部門的最高和最低工資
+-- ex:查詢出所有在"SALES"(銷售部)工作的員工的編號、姓名、基本工資、獎金、職位、雇用日期
+-- 、部門的最高和最低工資
 -- 步驟一:找出銷售部的編號
 SELECT deptno FROM dept WHERE dname='SALES';
 -- 步驟二:透過步驟一查出該部門的員工訊息
@@ -301,12 +301,12 @@ WHERE deptno=(SELECT deptno FROM dept WHERE dname='SALES');
 SELECT deptno don, MAX(sal) maxsal , MIN(sal) minsal FROM emp GROUP BY deptno;
 -- 步驟四:步驟三結合到步驟二
 -- 說明:在步驟二使用統計函數時的限制;
--- (A)統計函數1.單獨使用 2.結合GROUP BY使用，單獨使用的時後SELECT子句之中無法
---    出現任何欄位，結合GROUP BY使用時，SELECT子句之中只允許出現分組欄位。
+-- (A)統計函數1.單獨使用 2.結合GROUP BY使用，單獨使用的時後SELECT子句之中無法出現任何欄
+--    位，結合GROUP BY使用時，SELECT子句之中只允許出現分組欄位。
 -- (B)統計函數嵌套時不允許出現任何欄位包括分組欄位。
--- 由上述兩者限制下，直接進行步驟四會發現，整個SELECT查詢裡面需要統計查詢，但
--- 是卻無法直接使用統計查詢，那麼就可以在子查詢中直接完成，而且子查詢一定返回
--- 多行多列的數據，在FROM子句中出現。
+-- 由上述兩者限制下，直接進行步驟四會發現，整個SELECT查詢裡面需要統計查詢，但是卻無法直接
+-- 使用統計查詢，那麼就可以在子查詢中直接完成，而且子查詢一定返回多行多列的數據，在FROM子
+-- 句中出現。
 SELECT 
 e.empno, e.ename, e.sal, e.comm, e.job, e.hiredate, 
 t.maxsal, t.minsal
@@ -317,9 +317,8 @@ WHERE deptno=(SELECT deptno FROM dept WHERE dname='SALES')
 AND e.deptno=t.dno;
 
 
--- ex:查詢出所有工資高於公司平均工資的員工編號、姓名、基本工資、職位、雇用日期
--- 、所在部門名稱、位置、主管姓名、公司的工資等級、部門人數、平均工資、平均服務
--- 年限。
+-- ex:查詢出所有工資高於公司平均工資的員工編號、姓名、基本工資、職位、雇用日期、所在
+-- 部門名稱、位置、主管姓名、公司的工資等級、部門人數、平均工資、平均服務年限。
 -- 確定所需要的表:
 -- emp表:員工編號、姓名、基本工資、職位、雇用日期
 -- dept表:部門名稱、位置
@@ -330,8 +329,7 @@ AND e.deptno=t.dno;
 -- 員工和部門:emp.dpetno=dept.deptno
 -- 員工和主管編號:emp.mgr=memp.empno
 -- 員工和工資等級:sal BETWEEN salgrade.losal AND salgrade.hisal
--- 步驟一:使用AVG()函數統計公司的平均工資，結果返回單行單列，一定是在WHERE或是
--- HAVING中
+-- 步驟一:使用AVG()函數統計公司的平均工資，結果返回單行單列，一定是在WHERE或是HAVING中
 SELECT AVG(sal) FROM emp;
 -- 步驟二:查出高於步驟一的員工編號、姓名、基本工資、職位、雇用日期
 SELECT empno, ename, sal, job, hiredate
@@ -382,8 +380,8 @@ AND e.sal BETWEEN s.losal AND s.hisal
 AND e.deptno=t.dno;
 
 
--- ex:列出工資比"ALLEN"或"CLARK"多的所有員工的編號、姓名、基本工資、部門名稱
--- 、其主管姓名、部門人數。
+-- ex:列出工資比"ALLEN"或"CLARK"多的所有員工的編號、姓名、基本工資、部門名稱、其主管姓名
+-- 、部門人數。
 /*
 -- 步驟一:
 SELECT sal FROM emp WHERE ename='ALLEN'
@@ -480,8 +478,8 @@ AND e.mgr=memp.empno(+)
 AND e.deptno=t.don;
 
 
--- ex:列出公司各部門的經理(假設每個部門只有一個經理，job為"MANAGER")的姓名、
--- 工資、部門名稱、部門人數、部門平均工資
+-- ex:列出公司各部門的經理(假設每個部門只有一個經理，job為"MANAGER")的姓名、工資、部門名
+-- 稱、部門人數、部門平均工資
 -- 確定所需要的表:
 -- emp表:姓名、工資
 -- dept表:部門名稱
@@ -511,12 +509,11 @@ AND e.deptno=d.deptno
 AND e.deptno=t.dno;
 --============================================================================--
 --                                                                            --
-/* ※子查詢-在SELECT之中使用子查詢                                           */
+/* ※子查詢-在SELECT之中使用子查詢                                            */
 --                                                                            --
 --============================================================================--
--- 簡述:子查詢可以出現任意位置上，不過從實際的項目來講，在WHERE、FROM、HAVING
--- 子句之中使用子查詢的情況還是比較多的，而對於SELECT子句，只能是以一種介紹的
--- 形式進行說明。
+-- 簡述:子查詢可以出現任意位置上，不過從實際的項目來講，在WHERE、FROM、HAVING子句
+-- 之中使用子查詢的情況還是比較多的，而對於SELECT子句，只能是以一種介紹的形式進行說明。
 -- ex:查詢出公司每個部門的編號、名稱、位置、部門人數、平均工資
 -- 方式一:SELECT子查詢分組
 SELECT 
@@ -548,17 +545,16 @@ FROM emp e
 WHERE e.deptno=d.deptno
 ) avgsal
 FROM dept d;
--- 由上兩者執行後顯示，分組與不分組返回結果相同，原因是執行SELECT子句時已經
--- 先取得當前部門的訊息。
+-- 由上兩者執行後顯示，分組與不分組返回結果相同，原因是執行SELECT子句時已經先取得
+-- 當前部門的訊息。
 --============================================================================--
 --                                                                            --
 /* ※子查詢-WITH子句                                                          */
 --                                                                            --
 --============================================================================--
--- 簡述:可以使用WITH子句創建臨時查詢表。臨時表實際上就是一個查詢結果，如果
--- 一個查詢結果返回是多行多列，那麼就可以將其定義在FROM子句之中，表示其為一張
--- 臨時表。除了在FROM子句之中出現臨時表之外，也可以利用WITH子句直接定義臨時表
--- ，就可以繞開FROM子句。
+-- 簡述:可以使用WITH子句創建臨時查詢表。臨時表實際上就是一個查詢結果，如果一個查詢
+-- 結果返回是多行多列，那麼就可以將其定義在FROM子句之中，表示其為一張臨時表。除了在
+-- FROM子句之中出現臨時表之外，也可以利用WITH子句直接定義臨時表，就可以繞開FROM子句。
 
 -- ex:查詢每個部門的編號、名稱、位置、部門平均工資、人數
 WITH e AS(
@@ -570,8 +566,8 @@ FROM dept d, e
 WHERE d.deptno=e.deptno(+);
 
 
--- ex:查詢每個部門工資最高的員工編號、姓名、職位、雇用日期、工資、部門編號、
--- 部門名稱，顯示的結果按照部門編號進行排序。
+-- ex:查詢每個部門工資最高的員工編號、姓名、職位、雇用日期、工資、部門編號、部門名稱
+-- ，顯示的結果按照部門編號進行排序。
 WITH e AS(
 SELECT 
 deptno dno, MAX(sal) maxsal 
@@ -603,21 +599,20 @@ PARTITION BY 子句 欄位,....
 -- 語法組成如下:
 -- 函數名稱:類似於統計函數(COUNT()、SUM()等)，但是在此時有了更多的函數支持。
 -- OVER子句:為分析函數指名一個查詢結果集，此語句在SELECT子句之中使用。
--- PARTITION BY子句:將一個簡單的結果集分為N組(或稱為分區)，而後按照不同的組
--- 對數據進行統計。
+-- PARTITION BY子句:將一個簡單的結果集分為N組(或稱為分區)，而後按照不同的組對數據
+-- 進行統計。
 -- NULLS FIRST|NULLS LAST:表示返回數據行中包含NULL值是出現在排序序列前還是尾。
--- WINDOWING子句(代名詞):給定在定義變化的固定的數據窗口方法，分析函數將對此
---						  數據進行操作。
--- ORDER BY子句:主要就是進行排序，但是現在實現的是分區內數據的排序，而這個排序
--- 				會直接影響到最終的查詢結果。
+-- WINDOWING子句(代名詞):給定在定義變化的固定的數據窗口方法，分析函數將對此數據進行操作。
+-- ORDER BY子句:主要就是進行排序，但是現在實現的是分區內數據的排序，而這個排序會直接
+-- 		影響到最終的查詢結果。
 -- ORDER BY子句選項:
 --    NULLS FIRST:表示在進行排序前，出現null值的數據行排列在最前面。
 --    NULLS LAST:表示出現的null值數據行排列在最後面。
 
--- 在分析函數之中存在有三種子句:PARTITION BY、ORDER BY、WINDOWING，而這三種子句
--- 的組合順序有如下幾種
+-- 在分析函數之中存在有三種子句:PARTITION BY、ORDER BY、WINDOWING，而這三種子句的組合
+-- 順序有如下幾種
 -- 第一種組合:函數名稱([參數, ...])OVER(PARTITION BY子句,ORDER BY子句,WINDOWING
---             子句);
+--          子句);
 -- 第二種組合:函數名稱([參數, ...])OVER(PARTITION BY子句,ORDER BY子句);
 -- 第三種組合:函數名稱([參數, ...])OVER(PARTITION BY子句);
 -- 第四種組合:函數名稱([參數, ...])OVER(ORDER BY子句,WINDOWING子句);
@@ -628,9 +623,8 @@ PARTITION BY 子句 欄位,....
 -- ➤PARTITION子句
 -- ex:使用PARTITION子句
 SELECT deptno, ename, sal FROM emp;
--- 這個時候只是一個簡單查詢，但是在這個SELECT子句裡面是不可能出現統計函數，如:
--- COUNT()、SUM()，因為統計函數1.單獨使用 2.與GROUP BY一起使用。但有了分析函數的
--- 支持後:
+-- 這個時候只是一個簡單查詢，但是在這個SELECT子句裡面是不可能出現統計函數，如:COUNT()、
+-- SUM()，因為統計函數1.單獨使用 2.與GROUP BY一起使用。但有了分析函數的支持後:
 SELECT deptno, ename, 
 SUM(sal) OVER(PARTITION BY deptno) sum
 FROM emp;
@@ -687,12 +681,10 @@ FROM emp;
 
 
 -- ➤WINDOWING子句
--- 分窗子句主要是用於定義一個變化或固定的數據窗口方法，主要用於定義分析函數在
--- 操作行的集合，分窗子具有兩種實現方式:
--- 	實現一:值域窗(RANGE WINDOW)，邏輯偏移。當前分區之中當前行的前N行到當前行的
---			紀錄集。
--- 	實現二:行窗(ROWS WINDOW)，物理偏移。以排序的結果順序計算偏移當前行的起始行
---			紀錄集。
+-- 分窗子句主要是用於定義一個變化或固定的數據窗口方法，主要用於定義分析函數在操作行的集
+-- 合，分窗子具有兩種實現方式:
+-- 	實現一:值域窗(RANGE WINDOW)，邏輯偏移。當前分區之中當前行的前N行到當前行的紀錄集。
+-- 	實現二:行窗(ROWS WINDOW)，物理偏移。以排序的結果順序計算偏移當前行的起始行紀錄集。
 -- 而如果想要指定RANGE或ROWS的偏移量，則可以採用如下的幾種排序列:
 -- 	RANGE|ROWS 數字 PRECEDING;
 -- 	RANGE|ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW;
@@ -701,8 +693,8 @@ FROM emp;
 -- 	PRECEDING:主要是設置一個偏移量，這個偏移量可以是用戶設置的數字，或是其他標記。
 -- 	BETWEEN...AND:設置一個偏移量的操作範圍。
 -- 	UNBOUNDED PRECEDING:不限制偏移量大小。
--- 	FOLLOWING:如果不寫此語句表示使用上N行與當前行指定數據比較，如果編寫此語句，
--- 			  表示當前行與下N行數據比較。
+-- 	FOLLOWING:如果不寫此語句表示使用上N行與當前行指定數據比較，如果編寫此語句，表示當前
+-- 			      行與下N行數據比較。
 
 -- ex:在sal上設置偏移量;RANGE子句操作
 -- 未進行RANG子句操作前:向上n行偏移
@@ -759,8 +751,8 @@ ROWS 1 PRECEDING) sum
 FROM emp;
 /*
 <note:設置多少物理偏移就向上偏移多少列>
-題意為設置2行物理偏移，所以在進行部門區分後的sum要從分區後的第三列開始比較，
-前兩列的sum都是累加而來。
+題意為設置2行物理偏移，所以在進行部門區分後的sum要從分區後的第三列開始比較，前兩列的
+sum都是累加而來。
 
 部門10的分區:
 第二列的sum:3750<第三列的sal:5000，所以第三列的sum=3750+5000
@@ -780,8 +772,8 @@ FROM emp;
 
 
 -- ➤分析函數應用-數據統計函數:
--- ex:查詢員工編號是7369的員工姓名、職位、基本工資、部門編號、部門的人數、
--- 部門平均工資、部門最高工資、部門最低工資、部門總工資。
+-- ex:查詢員工編號是7369的員工姓名、職位、基本工資、部門編號、部門的人數、部門平均工資、
+-- 部門最高工資、部門最低工資、部門總工資。
 -- 說明:除了使用多表查詢的操作完成，現在有了分析函數，就可以使用分析函數完成。
 -- 步驟一:統計出所有數據
 SELECT 
@@ -824,8 +816,8 @@ AND e.empno=7369;
 */
 
 
--- ex:查詢員工的編號、姓名、基本工資、所在部門名稱、部門位置即此部門的平均工資
--- 、最高工資、最低工資。
+-- ex:查詢員工的編號、姓名、基本工資、所在部門名稱、部門位置即此部門的平均工資、最高工資
+-- 、最低工資。
 -- 確定所需資料表:
 -- emp表:員工的編號、姓名、基本工資
 -- dept表:部門名稱、部門位置
@@ -880,13 +872,13 @@ SELECT deptno, ename, sal,
 ROW_NUMBER() OVER(PARTITION BY deptno ORDER BY sal) row_result_deptno , 
 ROW_NUMBER() OVER(ORDER BY sal) row_result_all  
 FROM emp;
--- 由以上操作顯示，針對於所有的數據，ROW_NUMBER()自動生成行號，但是在每一個
--- 分區裡面它也存在。
+-- 由以上操作顯示，針對於所有的數據，ROW_NUMBER()自動生成行號，但是在每一個分區裡面它也
+-- 存在。
 
 
 -- ex:KEEP語句操作;查詢每個部門的最高及最低工資
--- 說明:KEEP語句的功能是保留滿足條件的數據，而且在使用DENSE_RANK()函數確定的
--- 集合後才可以使用，透過FIRST或LAST取得集合中的數據。
+-- 說明:KEEP語句的功能是保留滿足條件的數據，而且在使用DENSE_RANK()函數確定的集合後才可以
+-- 使用，透過FIRST或LAST取得集合中的數據。
 -- FIRST:取出DENSE_RANK返回集合中第一行數據
 -- LAST:取出DENSE_RANK返回集合中最後一行數據
 SELECT
@@ -898,8 +890,8 @@ GROUP BY deptno;
 
 
 -- ex:FIRST_VALUE()與LAST_VALUE()函數操作
--- 說明:OVER()是聲明一個數據集合，而利用FIRST_VALUE()或LAST_VALUE()函數取得
--- 集合中首行或尾行。
+-- 說明:OVER()是聲明一個數據集合，而利用FIRST_VALUE()或LAST_VALUE()函數取得集合中首行
+-- 或尾行。
 -- FIRST_VALUE(直行):返回區分(分組)的第一個值。
 -- LAST_VALUE(直行):返回區分(分組)的最後一個值。
 SELECT deptno, empno, ename, sal FROM emp WHERE deptno=10;
@@ -938,8 +930,8 @@ WHERE deptno=20;
 
 -- ➤分析函數應用-報表函數:
 -- ex:CUME_DIST()函數操作
--- 說明:CUME_DIST()函數他是計算相對位置，例如:假設分區有5條紀錄，那麼這些紀錄會
--- 按照1、0.8、0.6、0.4、0.2的方式進行劃分。
+-- 說明:CUME_DIST()函數他是計算相對位置，例如:假設分區有5條紀錄，那麼這些紀錄會按照1、
+-- 0.8、0.6、0.4、0.2的方式進行劃分。
 SELECT deptno, ename, sal, 
 CUME_DIST() OVER(PARTITION BY deptno ORDER BY sal) cume_result
 FROM emp 
@@ -984,8 +976,8 @@ SUM(DECODE(job,'CLERK',sal,0)) clerk_job ,
 SUM(DECODE(job,'SALESMAN',sal,0)) salesman_job 
 FROM emp 
 GROUP BY deptno;
--- 以上方式使用的是DECODE()函數，但是對於這個函數屬於Oracle自己的色，如果沒有
--- 此函數只能夠利用SELECT子句使用子查詢的方式完成。
+-- 以上方式使用的是DECODE()函數，但是對於這個函數屬於Oracle自己的色，如果沒有此函數
+-- 只能夠利用SELECT子句使用子查詢的方式完成。
 
 SELECT 
 deptno dno, 
@@ -1075,8 +1067,7 @@ SUM(sal) AS sum_sal , MAX(sal) AS max_sal
 )ORDER BY deptno;
 
 
--- ex:在PIVOT函數使用上有多欄位分組需求，增加一個sex欄位同時更新81年僱用的
--- 雇員的性別為女
+-- ex:在PIVOT函數使用上有多欄位分組需求，增加一個sex欄位同時更新81年僱用的雇員的性別為女
 ALTER TABLE emp ADD(sex VARCHAR2(10) DEFAULT '男');
 UPDATE emp SET sex='女' WHERE TO_CHAR(hiredate,'YYYY')='1981';
 COMMIT;
@@ -1128,8 +1119,8 @@ UNPIVOT INCLUDE NULLS(
 --                                                                            --
 --============================================================================--
 -- ➤層次函數
--- 簡述:層次查詢是一種較為確定數據行之間關係結構的一種操作。如:學校分為
--- "教學管理層"、"教師層"、"學生層"這樣三層次結構。
+-- 簡述:層次查詢是一種較為確定數據行之間關係結構的一種操作。如:學校分為"教學管理層"
+-- 、"教師層"、"學生層"這樣三層次結構。
 /*
 語法結構:
 LEVEL...
@@ -1152,8 +1143,8 @@ START WITH mgr IS NULL;
 
 -- ➤CONNECT_BY_ISLEAF偽列
 -- 說明:在一棵樹狀結構之中，節點會分為兩種:根節點、葉子節點，用戶可以利用
--- "CONNECT_BY_ISLEAF"偽列判斷某一個節點是根節點還是葉子節點，如果直行返回的是
--- 數字0，則表示根節點，反之返回為1。
+-- "CONNECT_BY_ISLEAF"偽列判斷某一個節點是根節點還是葉子節點，如果直行返回的是數字0，
+-- 則表示根節點，反之返回為1。
 -- ex:判斷是否為子節點
 SELECT empno,LPAD('|-',LEVEL*2,' ') || ename, mgr, LEVEL, 
 DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
@@ -1163,8 +1154,8 @@ START WITH mgr IS NULL;
 
 
 -- ➤CONNECT_BY_ROOT列
--- 說明:CONNECT_BY_ROOT主要作用是取得某一個欄位在本次分層之中的根節點數據名稱
--- ，例如:如果按照主管層次劃分，則所有數據的根節點都應該是KING。
+-- 說明:CONNECT_BY_ROOT主要作用是取得某一個欄位在本次分層之中的根節點數據名稱，例如:
+-- 如果按照主管層次劃分，則所有數據的根節點都應該是KING。
 -- ex:
 SELECT empno,LPAD('|-',LEVEL*2,' ') || ename, mgr, LEVEL, 
 CONNECT_BY_ROOT ename 
@@ -1180,27 +1171,27 @@ START WITH empno=7566;
 
 
 -- ➤SYS_CONNECT_BY_PATH(列,char)函數
--- 說明:利用"SYS_CONNECT_BY_PATH()"函數按照給出的節點關係，自動的將前根節點中的
--- 所有相關路徑進行顯示。
+-- 說明:利用"SYS_CONNECT_BY_PATH()"函數按照給出的節點關係，自動的將前根節點中的所有相關
+-- 路徑進行顯示。
 -- ex:使用SYS_CONNECT_BY_PATH()函數取得節點路徑訊息
-SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, mgr, 
-LEVEL, DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
+SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, mgr, LEVEL, 
+DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
 FROM emp 
 CONNECT BY PRIOR empno=mgr 
 START WITH mgr IS NULL;
 
 
 -- 去掉某一節點
-SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, mgr, 
-LEVEL, DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
+SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, mgr, LEVEL, 
+DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
 FROM emp 
 CONNECT BY PRIOR empno=mgr AND empno!=7698
 START WITH mgr IS NULL;
 
 
 -- ➤ORDER SIBLINGS BY 欄位
--- 說明:在使用層次查詢進行數據顯示時，如果用戶直接使用ORDER BY子句進行指定欄位
--- 的排序，有可能會破壞數據的組成結構。
+-- 說明:在使用層次查詢進行數據顯示時，如果用戶直接使用ORDER BY子句進行指定欄位的排序
+-- ，有可能會破壞數據的組成結構。
 -- ex:直接使用ORDER BY排序
 SELECT empno,LPAD('|-',LEVEL*2,' ') || ename, mgr, LEVEL, 
 DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
@@ -1218,11 +1209,11 @@ ORDER SIBLINGS BY ename;
 
 
 -- ➤CONNECT_BY_ISCYCLE偽列
--- 說明:在進行數據層次設計的過程之中，最為重要根據指定的數據列確定數據間的
--- 層次關係，但是有時候也可能出現死循環，如:KING的主管是BLAKE，而BLAKE的領導
--- 也是KING就表示一個循環關係，為了判斷循環關係的出現，在Oralce中也提供一個
--- CONNECT_BY_ISCYCLE偽列，來判斷是否會出現循環，如果出現循環，則顯示1，沒有
--- 出現循環，則顯示0。同時如果想要判斷是否為循環節點，則還需要"NOCYCLE"的支持。
+-- 說明:在進行數據層次設計的過程之中，最為重要根據指定的數據列確定數據間的層次關係，但是
+-- 有時候也可能出現死循環，如:KING的主管是BLAKE，而BLAKE的領導也是KING就表示一個循環關係
+-- ，為了判斷循環關係的出現，在Oralce中也提供一個CONNECT_BY_ISCYCLE偽列，來判斷是否會出
+-- 現循環，如果出現循環，則顯示1，沒有出現循環，則顯示0。同時如果想要判斷是否為循環節點，
+-- 則還需要"NOCYCLE"的支持。
 -- ex:原本KING沒有主管，但是為了發現問題，讓KING有一個主管，將主管設置為7698。
 UPDATE emp SET mgr=7698 WHERE empno=7839;
 -- ex:執行上面指令後，再執行下面指令會出現死循環

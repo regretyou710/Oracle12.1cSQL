@@ -76,7 +76,8 @@ SELECT * FROM emp WHERE NOT comm IS NUll;
 SELECT * FROM emp WHERE comm IS NULL;
 
 
--- ex:列出所有不領取獎金的員工，而且同時要求這些員工的基本工資大於2000的全部員工訊息
+-- ex:列出所有不領取獎金的員工，而且同時要求這些員工的基本工資大於2000的全部員工
+-- 訊息
 SELECT * FROM emp WHERE comm IS NULL AND sal>2000;
 
 
@@ -89,7 +90,8 @@ SELECT * FROM emp WHERE NOT (comm IS NOT NULL AND comm>=100);
 SELECT DISTINCT job FROM emp WHERE comm IS NOT NULL;
 
 
--- ➤列表範圍查找:IN、NOT IN。須注意:使用NOT IN時不可判斷內容為null，會返回無資料的結果。
+-- ➤列表範圍查找:IN、NOT IN。須注意:使用NOT IN時不可判斷內容為null，會返回無資料
+-- 的結果。
 -- ex:查詢員工編號是7369、7788、7566的員工訊息
 SELECT * FROM emp WHERE empno IN(7369,7788,7566);
 
@@ -147,7 +149,8 @@ AND (ename LIKE '%S%' OR ename LIKE'%K%')
 --============================================================================--
 -- ➤數據排序:ORDER BY。須注意:在所有子句中，ORDER BY子句是放在查語句最後一行
 -- ，最後一個執行。
--- 執行順序:FROM、WHERE、SELECT、ORDER BY。如此表示在ORDER BY中可以使用SELECT的別名。
+-- 執行順序:FROM、WHERE、SELECT、ORDER BY。如此表示在ORDER BY中可以使用
+-- 	    SELECT的別名。
 
 -- ex:查詢員工的完整訊息並按照基本工資由高到低排序
 SELECT * FROM emp ORDER BY sal DESC;

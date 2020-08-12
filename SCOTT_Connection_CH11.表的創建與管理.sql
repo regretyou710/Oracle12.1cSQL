@@ -1,6 +1,6 @@
 --============================================================================--
 --                                                                            --
-/* ※表的創建與管理-表的基本操作  		                                      */
+/* ※表的創建與管理-表的基本操作											  */
 --                                                                            --
 --============================================================================--
 -- ➤Oracle常用數據類型
@@ -167,11 +167,148 @@ PURGE TABLE employee;
 PURGE RECYCLEBIN;
 --============================================================================--
 --                                                                            --
-/* ※表的創建與管理-修改表結構			  		                              */
+/* ※表的創建與管理-修改表結構												  */
 --                                                                            --
 --============================================================================--
+-- 數據表屬於Oracle數據庫對象，那麼只要針於數據庫對象，其操作的語法就只有三中:
+-- ①創建:CREATE 對象類型 名稱。
+-- ②刪除:DROP  對象類型 名稱。
+-- ③修改:ALTER 對象類型 名稱。
+-- 須強調的是:如果可能盡量不要去使用數據表的改操作，ALTER指令盡量可以忽略，如果
+-- 在開發之中修改表結構，把表刪了重新建立。
+
+-- ➤操作準備
+@C:\Users\user\Desktop\Oracle12.1cSQL\CH11.表的創建與管理member.sql
+SELECT * FROM member;
 
 
+-- ➤為表中增加數據欄位
+-- 語法:ALTER TABLE 表名稱 ADD(欄位名稱 欄位類型 DEFAULT 默認值,
+-- 		欄位名稱 欄位類型 DEFAULT 默認值..); 
+-- ex:向member增加欄位
+-- 1.如果增加的時候沒有設置默認值，那麼所有的資料內容都是null。
+ALTER TABLE member ADD(age NUMBER(3));
+SELECT * FROM member;
+-- 2.增加時設置默認值，那麼所有的資料內容都會變為默認值的內容。
+ALTER TABLE member ADD(sex VARCHAR2(10) DEFAULT '男');
+ALTER TABLE member ADD(photo VARCHAR2(100) DEFAULT 'nophoto.jpg');
+SELECT * FROM member;
+
+
+-- ➤修改表中的欄位
+-- 語法:ALTER TABLE 表名稱 MODIFY(欄位名稱 欄位類型 DEFAULT 默認值); 
+-- ex:向member修改欄位
+ALTER TABLE member MODIFY(name VARCHAR2(30));
+ALTER TABLE member MODIFY(sex VARCHAR2(10) DEFAULT '女');
+DESC member;
+INSERT INTO member (mid,name) VALUES (4,'小昭');
+SELECT * FROM member;
+
+
+-- ➤刪除表中的欄位
+-- note:在進行直行刪除時，至少保留一個直行。如果某個數據表數據量很大，執行這種
+-- 刪除操作，這種性能損耗是非常龐大的，所以很多時候為了保證表在大數據量的情況下
+-- 刪除操作可以使用，又不影響表的正常使用，所以可以將表中設置為無用的直行。
+-- 語法:ALTER TABLE 表名稱 DROP COLUMN 欄位名稱; 
+-- ex:向member刪除欄位
+ALTER TABLE member DROP COLUMN photo;
+ALTER TABLE member DROP COLUMN age;
+DESC member;
+SELECT * FROM member;
+
+
+-- ➤無用欄位設置
+-- 語法:ALTER TABLE 表名稱 SET UNUSED(欄位名稱);
+-- 		ALTER TABLE 表名稱 SET UNUSED COLUMN 欄位名稱;
+-- ex:向member設置無用欄位
+ALTER TABLE member SET UNUSED(sex);
+ALTER TABLE member SET UNUSED COLUMN name;
+DESC member;
+SELECT * FROM member;
+-- 標記為無用欄位後，就可以執行刪除無用欄位
+-- ex:向member刪除無用欄位
+ALTER TABLE member DROP UNUSED COLUMNS;
+DESC member;
+SELECT * FROM member;
+
+
+-- ➤添加註釋
+-- 語法:COMMENT ON TABLE 表名稱|COLUMN 表名稱.欄位名稱 IS '註釋內容';
+-- ex:建立一張基本的表結構
+-- 刪除數據表
+DROP TABLE member PURGE;
+-- 創建數據表
+CREATE TABLE member(
+mid NUMBER, 
+name VARCHAR(50) DEFAULT '無名氏', 
+age NUMBER(3), 
+hirthday DATE
+);
+-- ex:查看表的註釋訊息;在Oracle中提供了一個"user_tab_comments"數據字典
+SELECT * FROM user_tab_comments;
+-- ex:向member表添加註釋
+COMMENT ON TABLE member IS '用於紀錄參加活動的成員訊息';
+SELECT * FROM user_tab_comments WHERE table_name='MEMBER';
+
+-- ex:查看橫列的註釋訊息;在Oracle中提供了一個"user_col_comments"數據字典
+SELECT * FROM user_col_comments;
+-- ex:向member表中的mid欄位添加註釋
+COMMENT ON COLUMN member.mid IS '參加活動的成員編號';
+SELECT * FROM user_col_comments WHERE table_name='MEMBER';
+
+
+-- ➤設置可見/不可見欄位
+-- 說明:如果某些數據直行的內容不需要使用，那麼直接為其設置null值數據即可，但是這
+-- 樣一來有可能會出現一個小問題，例如:在一張數據表設計的時候，考慮到日後需要增加
+-- 若干個直行，那麼這些直行如果提前增加的話，那麼就有可能造成開發人員的困擾(不知
+-- 到這些直行要作什麼)，為此就希望將這些暫時不使用的直行定義為不可見的狀態，這樣
+-- 開發人員在瀏覽數據時只需要瀏覽有用的部份即可。當需要這些直行時，再恢復其可見
+-- 狀態。在Oracle 12C之前，這些特性是不被支持的，而從Oracle 12C開始為了方便用戶
+-- 進行表管理，提供了不可見直行的使用，同時用戶也可以將一個可見直行修改為不可見
+-- 的狀態。
+-- 語法:ALTER TABLE 表名稱 MODIFY(欄位名稱 INVISIBLE);
+
+-- ex:定義數據表
+DROP TABLE mytab PURGE;
+CREATE TABLE mytab(
+mid NUMBER, 
+name VARCHAR2(30)
+);
+-- 如果現在name是一個之後才會使用的欄位，那麼這種情況下直接執行INSERT INTO操作，
+-- 必須設置mid和name。
+INSERT INTO mytab VALUES(1);
+-- 執行上面語句後發生，SQL 錯誤: ORA-00947: 值不夠
+
+
+-- ex:將name欄位修改為不可見狀態
+ALTER TABLE mytab MODIFY(name INVISIBLE);
+DESC mytab;
+-- 此時name欄位就不會在表結構上進行顯示，但是在數據字典上"user_tab_columns"可以查到
+SELECT * FROM user_tab_columns WHERE table_name='MYTAB';
+-- 再次進行添加數據
+INSERT INTO mytab VALUES(1);
+SELECT * FROM mytab;
+
+
+-- ex:將name欄位修改為可見狀態
+ALTER TABLE mytab MODIFY(name VISIBLE);
+DESC mytab;
+SELECT * FROM mytab;
+
+
+-- 除了在表創建之後修改可見與不可見狀態之外，表在創建的時候也可以直接設置。
+DROP TABLE mytab PURGE;
+CREATE TABLE mytab(
+mid NUMBER, 
+name VARCHAR2(30) INVISIBLE
+);
+DESC mytab;
+SELECT * FROM user_tab_columns WHERE table_name='MYTAB';
+--============================================================================--
+--                                                                            --
+/* ※表的創建與管理-表空間													  */
+--                                                                            --
+--============================================================================--
 
 
 

@@ -161,9 +161,9 @@ SELECT * FROM myemp;
 -- 在Oracle中也存在此項支持。
 -- ➤徹底刪除表，不經過回收站
 DROP TABLE myemp PURGE;
--- ➤徹底刪除回收站之中的表
+-- ➤徹底刪除回收站之中指定的表
 PURGE TABLE employee;
--- ➤清空回收站之中的表
+-- ➤清空回收站之中所有的表
 PURGE RECYCLEBIN;
 --============================================================================--
 --                                                                            --
@@ -332,8 +332,6 @@ SELECT * FROM user_tab_columns WHERE table_name='MYTAB';
 --                引等數據庫對象，例如:USERS、TEMP、UNDOTBS1等表空間。
 -- ▲數據表受到表空間的管理。
 -- ▲表空間分為兩類:數據表空間、臨時表空間。
-
-
 
 -- ➤創建表空間
 /*

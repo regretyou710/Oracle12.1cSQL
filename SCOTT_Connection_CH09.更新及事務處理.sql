@@ -160,7 +160,7 @@ set pagesiz 30;
 SELECT * FROM myemp;
 -- 此時myemp一共存在14行的數據。
 
--- ex:將第一個SESSION執行數據的刪除操作，刪除超過年雇用的員工
+-- ex:將第一個SESSION執行數據的刪除操作，刪除超過40年雇用的員工
 DELETE FROM myemp WHERE MONTHS_BETWEEN(SYSDATE,hiredate)/12>40;
 -- ex:打開第二個SESSION窗口，執行查詢操作，此時會發現數據應該被刪除了，但是
 -- 查詢後還在。

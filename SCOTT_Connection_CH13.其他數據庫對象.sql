@@ -465,15 +465,200 @@ SELECT * FROM user_synonyms;
 -- ex:在sys用戶中，刪除同義詞
 DROP SYNONYM myemp;
 CREATE PUBLIC SYNONYM myemp FOR c##scott.emp;
+--============================================================================--
+--                                                                            --
+/* ※其他數據庫對象-Oracle偽列                                                */
+--                                                                            --
+--============================================================================--
+-- ➤ROWID偽列
+-- 在數據表中每一行所保存的紀錄，實際上Oracle都會默認位每條紀錄分配一個唯一的
+-- 地址編號，而這個地址編號就是透過ROWID進行表示的，ROWID本身是一個數據的偽列
+-- ，所有的數據都利用ROWID進行數據定位。
+-- ▲ROWID可以作為唯一的橫列標記。
+-- ▲利用ROWNUM可以取得第一橫列和前N橫列紀錄。
+
+-- ex:查看ROWID
+SELECT ROWID, deptno, dname, loc FROM dept;
+-- ROWID不在dept表中，但卻可以使用。
+-- ROWID組成:
+-- 數據對象號(date object number):為AAAWok。
+-- 相對文件號(relative file number):為AAG。
+-- 數據塊號(block number):為AAAAC1。
+-- 數據行號(row number):為AAD。
 
 
+-- 如果需要還原ROWID的內容，那麼可以利用以下的函數完成。
+-- DBMS_ROWID.rowid_object(ROWID):從一個ROWID之中，取得數據對象號。
+-- DBMS_ROWID.rowid_relative_fno(ROWID):從一個ROWID之中，取得相對文件號。
+-- DBMS_ROWID.rowid_block_number(ROWID):從一個ROWID之中，取得數據塊號。
+-- DBMS_ROWID.rowid_row_number(ROWID):從一個ROWID之中，取得數據行號。
+SELECT ROWID, 
+DBMS_ROWID.rowid_object(ROWID) 數據對象號, 
+DBMS_ROWID.rowid_relative_fno(ROWID) 相對文件號, 
+DBMS_ROWID.rowid_block_number(ROWID) 數據塊號, 
+DBMS_ROWID.rowid_row_number(ROWID) 數據行號,
+deptno, dname, loc  
+FROM dept;
 
 
+-- ex:將表中重複的數據刪除掉，只保留不重複的數據。
+-- 刪除重複數據後最終的效果如下
+SELECT ROWID, deptno, dname, loc FROM dept;
+-- 操作前準備:
+-- 將dept表複製mydept
+CREATE TABLE mydept AS SELECT * FROM dept; 
+-- 在mydept表中增加若干行數據
+INSERT INTO mydept (deptno,dname,loc) 
+  VALUES (10,'ACCOUNTING','NEW YORK');
+INSERT INTO mydept (deptno,dname,loc) 
+  VALUES (10,'ACCOUNTING','NEW YORK');
+INSERT INTO mydept (deptno,dname,loc) 
+  VALUES (10,'ACCOUNTING','NEW YORK');
+INSERT INTO mydept (deptno,dname,loc) 
+  VALUES (20,'RESEARCH','DALLAS');
+INSERT INTO mydept (deptno,dname,loc) 
+  VALUES (20,'RESEARCH','DALLAS');
+-- 在mydept表中存在大量的重複數據
+SELECT ROWID, deptno, dname, loc FROM mydept;
+
+-- 程序分析:對於刪除數據，現在只要求保留一條，其他的重複都被刪除掉。既然要保留
+-- 最早的，那麼ROWID一定是最小的。
+-- 對mydept分組，統計出最早的ROWID數據
+SELECT MIN(ROWID), deptno, dname, loc 
+FROM mydept
+GROUP BY deptno, dname, loc;
+-- 此時已經知道了要保留的ROWID數據了，那麼就可以排除以上的幾個ROWID。
+DELETE FROM mydept 
+WHERE ROWID NOT IN(
+  SELECT MIN(ROWID)  
+  FROM mydept
+  GROUP BY deptno
+); 
+SELECT ROWID, deptno, dname, loc FROM mydept;
 
 
+-- ➤ROWNUM偽列
+-- 說明:主要是生成行號。
+-- 在所有給出的偽列之中，ROWNUM是一個非常重要的核心重點。
+
+-- ex:
+SELECT ROWNUM, empno, ename, job, sal, hiredate FROM emp;
+-- 在emp表中不存在ROWNUM這個列，可是這個列可以直接使用。可是必須提醒的是，
+-- ROWNUM絕對不是固定與某條數據綁在一起的。
 
 
+-- ex:列出工資高於公司平均工資的所有員工編號、姓名、基本工資、職位、僱用日期、
+-- 所在部門名稱、位置、公司的工資等級，但是為了訊息瀏覽方便，要求在每一行數據
+-- 顯示前都增加一個行號
+SELECT ROWNUM, e.empno, e.ename, e.sal, e.job, e.hiredate, 
+d.dname, d.loc, s.grade 
+FROM emp e, dept d, salgrade s 
+WHERE e.sal>(SELECT avg(sal) FROM emp)
+AND e.deptno=d.deptno 
+AND sal BETWEEN losal AND hisal;
+-- note:ROWNUM是根據紀錄橫列的累加而進行的自動編號，絕對不是固定的。
 
 
+-- ➤ROWNUM作用
+-- ROWNUM除了可以自動的進行橫列號的顯示之外，也可以完成以下兩個常用操作:
+-- 操作一:取出一個查詢的第一橫列紀錄。
+-- 操作二:取出一個查詢的前n橫列紀錄。
 
 
+-- ex:使用ROWNUM取得首橫列
+SELECT * FROM emp WHERE ROWNUM=1;
+-- 但是只能是首橫列不能是其他橫列。因為ROWNUM是隨機生成，是在SELECT子句之中
+-- 出現，WHERE要優先於SELECT執行。
+SELECT * FROM emp WHERE ROWNUM=2;
+-- 對於ROWNUM而言，可以取得前n橫列紀錄。
+SELECT * FROM emp WHERE ROWNUM<=10;
+SELECT * FROM emp WHERE ROWNUM<=5;
+-- 但如果設置範圍，那就不能取得了，例如使用BETWEEN...AND...
+SELECT * FROM emp WHERE ROWNUM BETWEEN 5 AND 10;
+
+
+-- ➤數據的分頁顯示
+-- 分頁操作組成:
+--  數據顯示部份:主要是從數據表之中選出指定的部份數據，需要ROWNUM偽列才可以完成。
+--  分頁控制部份:留給用戶的控制端，用戶只需要選擇指定的頁數，那麼應用程序就會根據
+--              用戶的選擇，列出指定的部份數據，相當於控制了格式中的currentPage。
+
+/*
+分頁操作語法
+SELECT * FROM 
+(
+	SELECT 列1,[,列2,...],ROWNUM rownum別名
+	FROM 表名稱[別名]
+	WHERE ROWNUM<=(currentPage(當前所在頁)*lineSize(每頁顯示紀錄行數))
+) temp
+WHERE temp.rownum別名>(currentPage(當前所在頁)-1)*lineSize(每頁顯示紀錄行數);
+*/
+
+-- ex:取出員工之中的前5條紀錄
+SELECT empno, ename, sal, job, hiredate, mgr, deptno, ROWNUM rn
+FROM emp 
+WHERE ROWNUM<=5;
+
+
+-- ex:假設每頁顯示5條，linesize=5，那麼當前業就是在第一頁，currentPage=1。
+SELECT * FROM(
+  SELECT empno, ename, sal, job, hiredate, mgr, deptno, ROWNUM rn
+  FROM emp 
+  WHERE ROWNUM<=5) temp 
+WHERE temp.rn>0;
+
+
+-- ex:顯示6~10條紀錄
+-- 當前所在頁為第2頁，那麼currentPage=2，每頁顯示5橫列，linesize=5
+SELECT * FROM(
+  SELECT empno, ename, sal, job, hiredate, mgr, deptno, ROWNUM rn
+  FROM emp 
+  WHERE ROWNUM<=10) temp 
+WHERE temp.rn>5;
+
+
+-- ➤FETCH(Oracle 12c新特性)
+-- 說明:在Oracle 12c之中為了方便數據的分頁顯示操作，專門提供了FETCH語句，使用此
+-- 語句可以方便的取得指定範圍內的操作數據。
+/*
+FETCH語法:
+SELECT [DISTINCT] 分組欄位1[AS][直行別名],[分組欄位2[AS][直行別名],...]
+FROM 表名稱1[表別名1],表名稱2[表別名2]...
+[WHERE 條件(s)]
+[GROUP BY 分組欄位1,分組欄位2,...]
+[HAVING 過濾條件(s)]
+[ORDER BY 排序欄位 ASC|DESC]
+[FETCH FIRST 橫列數][OFFSET 開始位置 ROWS FETCH NEXT 個數]|[FETCH NEXT 百分比
+PERCENT] ROW ONLY
+
+此語句有三種使用方式:
+①取得前n橫列紀錄:FETCH FIRST 橫列數 ROW ONLY。
+②取得指定範圍的紀錄:OFFSET 開始位置 ROWS FETCH NEXT 個數 ROWS ONLY。
+③按照百分比取得紀錄:FETCH NEXT 百分比 PERCENT ROWS ONLY。
+*/
+
+-- ex:取得emp表前5條紀錄
+SELECT *
+FROM emp 
+ORDER BY sal DESC
+FETCH FIRST 5 ROW ONLY;
+
+
+-- ex:取得emp表4~5條紀錄
+-- 從第3列開始取2條紀錄
+SELECT *
+FROM emp 
+ORDER BY sal DESC
+OFFSET 3 ROWS FETCH NEXT 2 ROWS ONLY;
+
+
+-- 按照百分比取部分數據
+SELECT *
+FROM emp 
+ORDER BY sal DESC
+FETCH NEXT 10 PERCENT ROWS ONLY;
+--============================================================================--
+--                                                                            --
+/* ※其他數據庫對象-索引                                                      */
+--                                                                            --
+--============================================================================--

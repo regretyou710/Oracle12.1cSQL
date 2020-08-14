@@ -1,3 +1,12 @@
+/*
+連線名稱              |角色   |SID    |服務名稱|
+------------------------------------------------
+SCOTT12C_CDBConnection|預設   |orcl12c|        |
+SYS12C_CDBConnection  |SYSDBA |orcl12c|        |
+SYS12C_PDBConnection  |SYSDBA |       |pdborcl |
+*/
+
+
 -- Oracle sqlplus.exe常用操作命令
 
 -- 如何重置密碼 oracle sys和system
@@ -5,7 +14,6 @@
 ② 	在dos窗口中輸入 conn/@orcl as sysdba; 注意：orcl是你的資料庫實例。
 ③-1在dos窗口中輸入 alter user sys identified by change_on_install;
 ③-2在dos窗口中輸入 alter user system identified by manager;
-
 
 
 

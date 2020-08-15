@@ -369,7 +369,9 @@ AUTOEXTEND on NEXT 2M;
 -- 此時一共建立了orcl12c_data與orcl12c_temp兩個表空間，在創建完之後的
 -- 表空間一定都會在數據字典之中進行相關內容的紀錄。如果想查看表空間(管理
 -- 員負責)可以使用dba_tablespaces數據字典查看。
--- note:使用系統管理員查看
+
+
+-- ➤使用系統管理員查看表空間
 -- SELECT * FROM dba_tablespaces;
 SELECT 
 tablespace_name, block_size, extent_management, status, contents 

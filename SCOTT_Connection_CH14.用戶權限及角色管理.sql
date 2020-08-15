@@ -17,20 +17,17 @@ CREATE USER 用戶名 IDENTIFIED BY 密碼 [DEFAULT TABLESPACE 表空間名稱]
 [PROFILE 概要文件名稱|DEFAULT][PASSWORD EXPIRE][ACCOUNT LOCK|UNLOCK]
 
 語法組成如下:
-CREATE USER 用戶名 IDENTIFIED BY 密碼:創建用戶同時設置密碼，但是用戶名和密碼不能
-                                      是Oracle保留字也不能以數字開頭(如果要設置
-									  為數字，需要將數字使用雙引號聲明)。
-DEFAULT TABLESPACE 表空間名稱:用戶存儲默認使用的表空間，當用戶創建對象沒有設置表
-                              空間時，就將保存在此處指定的表空間下，這樣就可以和
-							  系統表空間進行區分。
-TEMPORARY TABLESPACE 表空間名稱:用戶所使用的臨時表空間。
-QUOTA 數字[K|M]|UNLIMITED ON 表空間名稱:用戶在表空間上的使用限額，可以指定多個表
-                                        空間的限額，如果設置為"UNLIMITED"表示不
-										設置限額。
-PROFILE 概要文件名稱|DEFAULT:用戶操作的資源文件，如果不指定則使用默認配置資源文
-                             件。
-PASSWORD EXPIRE:用戶密碼失效，則在第一次使用時必須修改密碼。
-ACCOUNT LOCK|UNLOCK:用戶是否為鎖定狀態，默認為"UNLOCK"。
+①CREATE USER 用戶名 IDENTIFIED BY 密碼:創建用戶同時設置密碼，但是用戶名和密碼不
+能是Oracle保留字也不能以數字開頭(如果要設置為數字，需要將數字使用雙引號聲明)。
+②DEFAULT TABLESPACE 表空間名稱:用戶存儲默認使用的表空間，當用戶創建對象沒有設置
+表空間時，就將保存在此處指定的表空間下，這樣就可以和系統表空間進行區分。
+③TEMPORARY TABLESPACE 表空間名稱:用戶所使用的臨時表空間。
+④QUOTA 數字[K|M]|UNLIMITED ON 表空間名稱:用戶在表空間上的使用限額，可以指定多個
+表空間的限額，如果設置為"UNLIMITED"表示不設置限額。
+⑤PROFILE 概要文件名稱|DEFAULT:用戶操作的資源文件，如果不指定則使用默認配置資源
+文件。
+⑥PASSWORD EXPIRE:用戶密碼失效，則在第一次使用時必須修改密碼。
+⑦ACCOUNT LOCK|UNLOCK:用戶是否為鎖定狀態，默認為"UNLOCK"。
 */
 -- ▲如果要進行用戶的操作，須具備系統管理員權限。
 
@@ -57,31 +54,31 @@ SELECT * FROM dba_ts_quotas;
 -- 語法:CREATE PROFILE 概要文件名稱 LIMIT 命令(s);
 /*
 第一組:資源限制命令
-SESSION_PER_USER 數字 |UNLIMITED|DEFAULT:允許一個用戶同時創建SESSION的最大數量。
-CPU_PER_SESSION 數字 |UNLIMITED|DEFAULT:每一個SESSION允許使用CPU的時間數，單位為
-                                        毫秒。
-CPU_PER_CALL 數字 |UNLIMITED|DEFAULT:限制每次調用SQL語句期間，CPU的時間總量。
-CONNECT_TIME 數字 |UNLIMITED|DEFAULT:每個SESSION的連接時間數，單位為分。
-IDLE_TIME 數字 |UNLIMITED|DEFAULT:每個SESSION的超時時間，單位為分。
-LOGICAL_READS_PER_SESSION 數字 |UNLIMITED|DEFAULT:為了防止笛卡爾積的產生，可以限
-                                                  定每一個用戶最多允許讀取的數據
-												  塊數。
-LOGICAL_READS_PER_CALL 數字 |UNLIMITED|DEFAULT:每次調用SQL語句期間，最多允許用戶
-                                               讀取的數據塊數。
+①SESSION_PER_USER 數字 |UNLIMITED|DEFAULT:允許一個用戶同時創建SESSION的最大數量
+。
+②CPU_PER_SESSION 數字 |UNLIMITED|DEFAULT:每一個SESSION允許使用CPU的時間數，單位
+為毫秒。
+③CPU_PER_CALL 數字 |UNLIMITED|DEFAULT:限制每次調用SQL語句期間，CPU的時間總量。
+④CONNECT_TIME 數字 |UNLIMITED|DEFAULT:每個SESSION的連接時間數，單位為分。
+⑤IDLE_TIME 數字 |UNLIMITED|DEFAULT:每個SESSION的超時時間，單位為分。
+⑥LOGICAL_READS_PER_SESSION 數字 |UNLIMITED|DEFAULT:為了防止笛卡爾積的產生，可以
+限定每一個用戶最多允許讀取的數據塊數。
+⑦LOGICAL_READS_PER_CALL 數字 |UNLIMITED|DEFAULT:每次調用SQL語句期間，最多允許用
+戶讀取的數據塊數。
 
 第二組:口令限制命令
-FAILED_LOGIN_ATTEMPTS 數字 |UNLIMITED|DEFAULT:當連續登入失敗次數達到該參數指定值
-                                              時，用戶被加鎖。
-PASSWORD_LIFE_TIME 數字 |UNLIMITED|DEFAULT:口令的有效(天)，默認為UNLIMITED。
-PASSWORD_REUSE_TIME 數字 |UNLIMITED|DEFAULT:口令被修改後原有口令隔多少天後可以被
-                                            重新使用，默認為UNLIMITED。
-PASSWORD_REUSE_MAX 數字 |UNLIMITED|DEFAULT:口令被修改後原有口令被修改多少次才允
-                                           許被重新使用。
-PASSWORD_VERIFY_FUNCTION 數字 |UNLIMITED|DEFAULT:口令校驗函數。
-PASSWORD_LOCK_TIME 數字 |UNLIMITED|DEFAULT:帳戶因FAILED_LOGIN_ATTEMPTS鎖定時，加
-                                           鎖天數。
-PASSWORD_GRACE_TIME 數字 |UNLIMITED|DEFAULT:口令過期後，繼續使用員口令官限期(天)
-                                            。
+①FAILED_LOGIN_ATTEMPTS 數字 |UNLIMITED|DEFAULT:當連續登入失敗次數達到該參數指定
+值時，用戶被加鎖。
+②PASSWORD_LIFE_TIME 數字 |UNLIMITED|DEFAULT:口令的有效(天)，默認為UNLIMITED。
+③PASSWORD_REUSE_TIME 數字 |UNLIMITED|DEFAULT:口令被修改後原有口令隔多少天後可以
+被重新使用，默認為UNLIMITED。
+④PASSWORD_REUSE_MAX 數字 |UNLIMITED|DEFAULT:口令被修改後原有口令被修改多少次才
+允許被重新使用。
+⑤PASSWORD_VERIFY_FUNCTION 數字 |UNLIMITED|DEFAULT:口令校驗函數。
+⑥PASSWORD_LOCK_TIME 數字 |UNLIMITED|DEFAULT:帳戶因FAILED_LOGIN_ATTEMPTS鎖定時，
+加鎖天數。
+⑦PASSWORD_GRACE_TIME 數字 |UNLIMITED|DEFAULT:口令過期後，繼續使用員口令官限期
+(天)。
 */
 
 -- ➤創建PROFILE文件

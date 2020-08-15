@@ -277,14 +277,14 @@ WHERE d.deptno=temp.deptno(+);
 -- 由以上兩種操作方式都可以實現同樣的結果，那麼該使用哪種?為了解決此問題，可以將
 -- 數據擴大100倍，即:emp表中的數據為1400條紀錄，而dept表中的數據為400條紀錄。
 -- 方法一:多欄位分組實現
--- 	當dept和emp表關聯的時候一定會存在笛卡爾積，數據量 = emp表的1400條 * dpet表的
--- 	400條 = 560000條紀錄。
+-- 當dept和emp表關聯的時候一定會存在笛卡爾積，數據量 = emp表的1400條 * dpet表的
+-- 400條 = 560000條紀錄。
 -- 方法二:子查詢
--- 	統計:emp表的1400條紀錄，而且最終的統計結果的行數不可能超過400行(在步驟二透過
--- 	部門編號分類統計，而分類只有4種*100倍)
--- 	多表關聯:dpet表的400條紀錄(步驟一的100倍) * 子查詢的最多400條紀錄(步驟二的100倍) 
--- 	= 160000條紀錄
--- 	最終結果:160000 + 1400 = 161400條紀錄 
+-- 統計:emp表的1400條紀錄，而且最終的統計結果的行數不可能超過400行(在步驟二透過
+-- 部門編號分類統計，而分類只有4種*100倍)。
+-- 多表關聯:dpet表的400條紀錄(步驟一的100倍) * 子查詢的最多400條紀錄(步驟二的100倍) 
+-- = 160000條紀錄。
+-- 最終結果:160000 + 1400 = 161400條紀錄。
 -- 所以使用子查詢可以解決多表查詢所帶來的效能問題。
 
 
@@ -486,7 +486,7 @@ AND e.deptno=t.don;
 -- emp表:姓名、工資
 -- dept表:部門名稱
 -- emp表:部門人數、部門平均工資
---確定已知關聯欄位:
+-- 確定已知關聯欄位:
 -- 員工(經理)和部門:emp.deptno=dept.deptno
 -- 步驟一:
 SELECT ename, sal FROM emp WHERE job IN ('MANAGER');
@@ -607,9 +607,9 @@ PARTITION BY 子句 欄位,....
 -- 對數據進行統計。
 -- NULLS FIRST|NULLS LAST:表示返回數據行中包含NULL值是出現在排序序列前還是尾。
 -- WINDOWING子句(代名詞):給定在定義變化的固定的數據窗口方法，分析函數將對此
---						  數據進行操作。
+--                       數據進行操作。
 -- ORDER BY子句:主要就是進行排序，但是現在實現的是分區內數據的排序，而這個排序
--- 				會直接影響到最終的查詢結果。
+--              會直接影響到最終的查詢結果。
 -- ORDER BY子句選項:
 --    NULLS FIRST:表示在進行排序前，出現null值的數據行排列在最前面。
 --    NULLS LAST:表示出現的null值數據行排列在最後面。
@@ -617,7 +617,7 @@ PARTITION BY 子句 欄位,....
 -- 在分析函數之中存在有三種子句:PARTITION BY、ORDER BY、WINDOWING，而這三種子句
 -- 的組合順序有如下幾種
 -- 第一種組合:函數名稱([參數, ...])OVER(PARTITION BY子句,ORDER BY子句,WINDOWING
---             子句);
+--            子句);
 -- 第二種組合:函數名稱([參數, ...])OVER(PARTITION BY子句,ORDER BY子句);
 -- 第三種組合:函數名稱([參數, ...])OVER(PARTITION BY子句);
 -- 第四種組合:函數名稱([參數, ...])OVER(ORDER BY子句,WINDOWING子句);
@@ -689,20 +689,21 @@ FROM emp;
 -- ➤WINDOWING子句
 -- 分窗子句主要是用於定義一個變化或固定的數據窗口方法，主要用於定義分析函數在
 -- 操作行的集合，分窗子具有兩種實現方式:
--- 	實現一:值域窗(RANGE WINDOW)，邏輯偏移。當前分區之中當前行的前N行到當前行的
---			紀錄集。
--- 	實現二:行窗(ROWS WINDOW)，物理偏移。以排序的結果順序計算偏移當前行的起始行
---			紀錄集。
+-- 實現一:值域窗(RANGE WINDOW)，邏輯偏移。當前分區之中當前行的前N行到當前行的
+--        紀錄集。
+-- 實現二:行窗(ROWS WINDOW)，物理偏移。以排序的結果順序計算偏移當前行的起始行
+--        紀錄集。
 -- 而如果想要指定RANGE或ROWS的偏移量，則可以採用如下的幾種排序列:
 -- 	RANGE|ROWS 數字 PRECEDING;
 -- 	RANGE|ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW;
 -- 	RANGE|ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING;
 -- 以上的幾種排列之中包含的概念如下:
--- 	PRECEDING:主要是設置一個偏移量，這個偏移量可以是用戶設置的數字，或是其他標記。
+-- 	PRECEDING:主要是設置一個偏移量，這個偏移量可以是用戶設置的數字，或是其他
+--                標記。
 -- 	BETWEEN...AND:設置一個偏移量的操作範圍。
 -- 	UNBOUNDED PRECEDING:不限制偏移量大小。
--- 	FOLLOWING:如果不寫此語句表示使用上N行與當前行指定數據比較，如果編寫此語句，
--- 			  表示當前行與下N行數據比較。
+-- 	FOLLOWING:如果不寫此語句表示使用上N行與當前行指定數據比較，如果編寫此語句
+--               ，表示當前行與下N行數據比較。
 
 -- ex:在sal上設置偏移量;RANGE子句操作
 -- 未進行RANG子句操作前:向上n行偏移
@@ -924,10 +925,10 @@ WHERE deptno=10;
 
 
 -- ex:LAG()與LEAD()函數操作
--- LAG(欄位[,橫列數][,默認值]):訪問分區(分組)中指定前N行的紀錄(以當前紀錄列前N行)，
--- 如果沒有則返回默認值。
--- LEAD(欄位[,橫列數][,默認值]):訪問分區(分組)中指定後N行的紀錄(以當前紀錄列後N行)，
--- 如果沒有則返回默認值。
+-- LAG(欄位[,橫列數][,默認值]):訪問分區(分組)中指定前N行的紀錄(以當前紀錄列前N行)
+-- ，如果沒有則返回默認值。
+-- LEAD(欄位[,橫列數][,默認值]):訪問分區(分組)中指定後N行的紀錄(以當前紀錄列後N行)
+-- ，如果沒有則返回默認值。
 SELECT 
 deptno, empno, ename, sal, 
 LAG(sal,2,0) OVER(PARTITION BY deptno ORDER BY sal) lag_result , 
@@ -1136,10 +1137,10 @@ LEVEL...
 CONNECT BY [NOCYCLE] PRIOR 連接條件 
 [START WITH 開始條件]
 語法組成:
-	LEVEL:可以根據數據所處的層次結構實現自動的層次編號，如:1、2、3。
-	CONNECT BY:指的是數據之間的連接，如:員工數據依靠mgr找到其主管，就是一個連接
-		   條件，其中NOCYCLE需要結合CONNECT_BY_ISCYCLE偽列確定出父子節點循環關係。
-	START WITH:根節點數據的開始條件。
+LEVEL:可以根據數據所處的層次結構實現自動的層次編號，如:1、2、3。
+CONNECT BY:指的是數據之間的連接，如:員工數據依靠mgr找到其主管，就是一個連接
+           條件，其中NOCYCLE需要結合CONNECT_BY_ISCYCLE偽列確定出父子節點循環關係。
+START WITH:根節點數據的開始條件。
 */
 
 -- ex:查出員工對應主管的層次結構
@@ -1183,16 +1184,16 @@ START WITH empno=7566;
 -- 說明:利用"SYS_CONNECT_BY_PATH()"函數按照給出的節點關係，自動的將前根節點中的
 -- 所有相關路徑進行顯示。
 -- ex:使用SYS_CONNECT_BY_PATH()函數取得節點路徑訊息
-SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, mgr, 
-LEVEL, DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
+SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname,  
+mgr, LEVEL, DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
 FROM emp 
 CONNECT BY PRIOR empno=mgr 
 START WITH mgr IS NULL;
 
 
 -- 去掉某一節點
-SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, mgr, 
-LEVEL, DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
+SELECT empno,LPAD('|-',LEVEL*2,' ') || SYS_CONNECT_BY_PATH(ename,'=>') empname, 
+mgr, LEVEL, DECODE(CONNECT_BY_ISLEAF,0,'根節點',1,'    子節點') ISLEAF 
 FROM emp 
 CONNECT BY PRIOR empno=mgr AND empno!=7698
 START WITH mgr IS NULL;

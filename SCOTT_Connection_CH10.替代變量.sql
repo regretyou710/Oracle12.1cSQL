@@ -27,8 +27,8 @@ SELECT empno, ename, job , hiredate, sal
 FROM emp WHERE hiredate<TO_DATE('&inputhiredate','YYYY,MM,DD');
 
 
--- ex:操作兩個輸入欄位;輸入查詢員工的職位及工資(高於輸入工資)訊息，而後顯示員工編號、
--- 姓名、職位、僱用日期、基本工資
+-- ex:操作兩個輸入欄位;輸入查詢員工的職位及工資(高於輸入工資)訊息，而後顯示
+-- 員工編號、姓名、職位、僱用日期、基本工資
 SELECT empno, ename, job , hiredate, sal 
 FROM emp WHERE job=UPPER('&inputjob') AND sal>&inputsal;
 
@@ -55,8 +55,8 @@ GROUP BY &inpuGroupByColume ;
 SELECT &&inputGroupByColume, SUM(sal), AVG(sal) FROM emp  
 GROUP BY &inputGroupByColume ;
 
--- 但如此操作也再出現一個問題，如果這個時候執行語句會無法輸入欄位，變成第一次執行的欄位
--- 固定住。所以有兩種方式來解決此問題: 1.關閉窗口重啟 2.執行UNDEFINE命令。
+-- 但如此操作也再出現一個問題，如果這個時候執行語句會無法輸入欄位，變成第一次執行
+-- 的欄位固定住。所以有兩種方式來解決此問題: 1.關閉窗口重啟 2.執行UNDEFINE命令。
 UNDEFINE inputGroupByColume;
 
 -- 如果不需要任何替代變量的定義，可以輸入SET DEFINE OFF指定
@@ -83,7 +83,7 @@ ACCEPT替代變量名稱[數據類型][FORMAT 格式][PROMPT '提示訊息']
 
 ACCEPT語法中各個參數的作用如下所示:
 替代變量名稱:存儲值的變量名稱，如果該變量不存在，則由SQL*Plis創建該變量，但是在
-			 定義此替代變量名稱前不能加上"&"。
+             定義此替代變量名稱前不能加上"&"。
 數據類型:可以是NUMBER、VARCHAR或DATE型數據。
 FORMAT 格式:指定格式化模型，例如A10或9.99。
 PROMPT 提示訊息:用戶輸入替代變量時的提示訊息。

@@ -344,12 +344,12 @@ COMMIT;
 -- 現在都是以嵌套表的形式進行數據保存。
 
 
--- 查看department表中數據
+-- ex:查看department表中數據
 SELECT * FROM department;
 -- 現在返回的實際上是一個嵌套表的數據。
 
 
--- 單獨查詢projects語句
+-- ex:單獨查詢projects語句
 SELECT projects FROM department WHERE did=20;
 -- 現在返回的內容是一個對象，但所需要的是不應該是一個對象，而是對象中的內容。
 
@@ -373,6 +373,8 @@ WHERE pro.column_value='<JAVA WEB開發實戰經典>';
 
 
 -- ➤複合類型嵌套表
+-- 簡述:在子表中定義多個欄位，其中外鍵約束參照父類主鍵或唯一約束，而父表的欄位
+-- 關聯變成包含子表定義多個欄位的複合類型。
 /*
 創建新的對象類型
 語法:
@@ -430,16 +432,16 @@ VALUES (20,'ORACLE出版部',
 COMMIT;
 
 
--- 查看department表中數據
+-- ex:查看department表中數據
 SELECT * FROM department;
 
 
--- 查看一個部門的全部項目訊息
+-- ex:查看一個部門的全部項目訊息
 SELECT * FROM TABLE(
 SELECT projects FROM department WHERE did=20);
 
 
--- 修改某個部門的一個項目訊息
+-- ex:修改某個部門的一個項目訊息
 UPDATE  TABLE(SELECT projects FROM department WHERE did=20) pro 
 SET VALUE(pro)=project_type(11,'<ORACLE開發實戰經典>',108.8,
  TO_DATE('2013-06-20','YYYY-MM-DD')) 
@@ -447,7 +449,7 @@ WHERE pro.projectid=11;
 COMMIT;
 
 
--- 刪除表中紀錄
+-- ex:刪除表中紀錄
 DELETE FROM TABLE(SELECT projects FROM department WHERE did=20) pro 
 WHERE pro.projectid=12;
 COMMIT;
@@ -504,7 +506,7 @@ END;
 /
 
 
--- 利用嵌套表進行數據的更新操作。
+-- ➤使用數據表，在PL/SQL上操作簡單嵌套表的更新
 -- ex:準備過程
 DROP TABLE department PURGE;
 CREATE OR REPLACE TYPE project_nested IS TABLE OF VARCHAR2(50) NOT NULL;  
@@ -530,38 +532,303 @@ BEGIN
  INSERT INTO department VALUES v_dept; 
 END;
 /
-
-select * from department;
-
+COMMIT;
 
 
+-- ex:查看department表中數據
+SELECT * FROM department;
 
 
+-- ex:查看一個部門的全部項目訊息
+SELECT * FROM TABLE(
+SELECT projects FROM department WHERE did=88);
 
 
+-- ex:利用嵌套表實現修改操作
+DECLARE  
+ v_projects_list project_nested := 
+ project_nested('<JAVAWEB實戰教學>','<C#進階教學>','<Android遊戲開發教學>'); 
+ v_dept department%ROWTYPE; -- 將一橫列數據存到v_dpet變數
+BEGIN 
+ UPDATE department SET projects=v_projects_list WHERE did=88;
+END;
+/
+COMMIT;
 
 
+-- PL/SQL除了可以使用簡單類型的嵌套表，也可以使用複合類型的嵌套表。但複合類型嵌
+-- 套就不能在PL/SQL中定義，須在外部定義。
+
+-- ➤未使用數據表，在PL/SQL上操作複合嵌套表
+-- ex:創建一個新對象類型
+CREATE OR REPLACE TYPE project_type AS OBJECT(
+projectid NUMBER,
+projectname VARCHAR2(50),
+projectfunds NUMBER,
+pubdate DATE
+);
+/
 
 
+-- ex:在PL/SQL中使用此複合類型嵌套表
+DECLARE 
+ TYPE project_nested IS TABLE OF project_type NOT NULL;
+ v_projects project_nested := 
+  project_nested(
+  project_type(10,'<JAVA開發實戰經典>',79.8,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(11,'<C#開發實戰經典>',69.8,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(12,'<Android開發實戰經典>',88,TO_DATE('2012-03-19','YYYY-MM-DD'))
+  );
+BEGIN
+ FOR i IN v_projects.FIRST .. v_projects.LAST LOOP 
+  DBMS_OUTPUT.put_line('項目編號: ' || v_projects(i).projectid 
+  || ', 項目名稱: ' || v_projects(i).projectname 
+  || ', 金額: ' || v_projects(i).projectfunds 
+  || ', 發布日期: ' || v_projects(i).pubdate);
+ END LOOP;
+END;
+/
 
 
+-- ➤使用數據表，在PL/SQL上操作複合嵌套表的更新
+DROP TABLE department PURGE;
+DROP TYPE project_type FORCE;
+-- ex:創建一個新對象類型
+CREATE OR REPLACE TYPE project_type AS OBJECT(
+projectid NUMBER,
+projectname VARCHAR2(50),
+projectfunds NUMBER,
+pubdate DATE
+);
+/
+-- 隨後要根據此類型定義新的嵌套表類型。
 
 
+-- ex:定義嵌套表類型
+CREATE OR REPLACE TYPE project_nested AS TABLE OF project_type NOT NULL;
+/
 
 
+-- ex:創建部門表，使用複合類型嵌套表
+CREATE TABLE department(
+ did NUMBER,
+ deptname VARCHAR2(30) NOT NULL,
+ projects project_nested,
+ CONSTRAINT pk_did PRIMARY KEY(did)
+) NESTED TABLE projects STORE AS project_nested_table;
 
 
+-- ex:向department表增加紀錄
+DECLARE 
+ v_projects_list project_nested := 
+  project_nested(
+  project_type(10,'<JAVA開發實戰經典>',79.8,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(11,'<C#開發實戰經典>',69.8,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(12,'<Android開發實戰經典>',88,TO_DATE('2012-03-19','YYYY-MM-DD'))
+  );
+  v_dept department%ROWTYPE;
+BEGIN 
+ v_dept.did := 88;
+ v_dept.deptname := 'ORACLE';
+ v_dept.projects := v_projects_list; -- 直接使用嵌套表數據
+ INSERT INTO department VALUES v_dept;
+END;
+/
+COMMIT;
 
 
+-- ex:查看department表中數據
+SELECT * FROM department;
 
 
+-- ex:查看一個部門的全部項目訊息
+SELECT * FROM TABLE(
+SELECT projects FROM department WHERE did=88);
 
 
+-- ex:利用嵌套表實現修改操作
+DECLARE 
+ v_projects_list project_nested := 
+  project_nested(
+  project_type(30,'<JAVAWEB實戰教學>',550,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(31,'<C#進階教學>',430,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(32,'<Android遊戲開發教學>',490,TO_DATE('2012-03-19','YYYY-MM-DD'))
+  );
+  v_dept department%ROWTYPE;
+BEGIN 
+ UPDATE department SET projects=v_projects_list WHERE did=88;
+END;
+/
+COMMIT;
+--============================================================================--
+--                                                                            --
+/* ※集合-可變陣列                                                            */
+--                                                                            --
+--============================================================================--
+-- 說明:可變陣列與嵌套表相似，也是一種集合。一個可變陣列是對象的一個集合，其中每
+-- 個對象都具有相同的數據類型。可變陣列的大小由創建時決定。在表中建立可變陣列後，
+-- 可變陣列在主表中作為一個直行對待。從概念上講，可變陣列是一個限制了操作個數的
+-- 嵌套表。
+-- 可變陣列，允許用戶在表中存儲重複的屬性。例如:在講解嵌套表時使用過得部門表，
+-- 一個部門可以有多個項目，用戶使用可變陣列這一類型可以在部門中設置多個項目的名
+-- 字，如果限定每個部門的項目不超過3個，則可以建立一個3個數據項為限的可變陣列。
+-- 之後就可以處理此可變陣列，可以查詢每一個部門的所有項目訊息。
 
 
+-- ➤定義簡單類型的可變陣列
+-- ex:創建陣列類型
+CREATE OR  REPLACE TYPE project_varray IS VARRAY(3) OF VARCHAR2(50);
+/
+
+-- ex:創建一張數據表，使用此類型
+DROP TABLE department PURGE;
+DROP TYPE project_type FORCE;
+CREATE TABLE department(
+ did NUMBER,
+ deptname VARCHAR2(30) NOT NULL,
+ projects project_varray,
+ CONSTRAINT pk_did PRIMARY KEY(did)
+);
 
 
+-- ex:向表中增加新的數據
+INSERT INTO department (did,deptname,projects) 
+VALUES (10,'甲骨文股份有限公司',
+ project_varray('JAVA','ORACLE DATABASE','ORACLE ERP'));
+INSERT INTO department (did,deptname,projects) 
+VALUES (20,'ORACLE出版社',
+ project_varray('JAVA入門到精通','ANDROID設計教學'));
+COMMIT;
+SELECT * FROM department;
 
 
+-- 要注意的是，可變陣列是一個固定了長度的嵌套表。而且本次建立的陣列的個數只能是
+-- 3個。
+INSERT INTO department (did,deptname,projects) 
+VALUES (10,'甲骨文股份有限公司',
+project_varray('JAVA','ORACLE DATABASE','ORACLE ERP','ORACLE EMP'));
+-- 錯誤報告:SQL 錯誤: ORA-22909: 超過最大的 VARRAY 限制
+ 
+ 
+-- ex:對於可變陣列直行的查詢可使用TABLE完成
+SELECT * FROM TABLE(
+SELECT projects FROM department WHERE did=20);
 
 
+-- ex:更新數據
+UPDATE department 
+SET projects=project_varray('JAVA進階課程','ANDROID實戰項目','ORACLEDB入門') 
+WHERE did=20;
+COMMIT;
+SELECT * FROM department;
+
+
+-- ➤定義複合類型的可變陣列
+-- 複合類型可變陣列同樣需要定義一個新的對性類型。
+-- ex:創建一個表示項目類型的對象
+SELECT * FROM user_types;
+DROP TABLE department PURGE;
+DROP TYPE project_type FORCE;
+CREATE OR REPLACE TYPE project_type AS OBJECT(
+projectid NUMBER,
+projectname VARCHAR2(50),
+projectfunds NUMBER,
+pubdate DATE
+);
+/
+
+
+-- ex:定義新的陣列類型
+CREATE OR REPLACE TYPE project_varray AS VARRAY(3) OF project_type;
+/
+
+
+-- ex:定義數據表，使用可變陣列
+CREATE TABLE department(
+ did NUMBER,
+ deptname VARCHAR2(30) NOT NULL,
+ projects project_varray,
+ CONSTRAINT pk_did PRIMARY KEY(did)
+);
+
+
+-- ex:向表中增加數據
+INSERT INTO department (did,deptname,projects) 
+VALUES (10,'甲骨文股份有限公司',
+ project_varray(
+  project_type(10,'ERP管理系統',900000,TO_DATE('2002-10-02','YYYY-MM-DD')),
+  project_type(11,'CRM客戶系統',500000,TO_DATE('2008-09-12','YYYY-MM-DD'))
+  )
+ );
+INSERT INTO department (did,deptname,projects) 
+VALUES (20,'ORACLE出版社',
+ project_varray(
+  project_type(10,'<JAVA開發實戰經典>',79.8,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(11,'<C#開發實戰經典>',69.8,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(12,'<Android開發實戰經典>',88,TO_DATE('2012-03-19','YYYY-MM-DD'))
+  )
+ );
+COMMIT;
+SELECT * FROM department;
+SELECT * FROM TABLE(
+SELECT projects FROM department WHERE did=20);
+
+
+-- ex:更新部門訊息
+UPDATE department SET projects=
+project_varray(
+  project_type(15,'<JAVA開發實戰經典>',79.8,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(16,'<ORACLEDB實戰經典>',69.8,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(17,'<Android開發實戰經典>',88,TO_DATE('2012-03-19','YYYY-MM-DD'))
+  ) 
+WHERE did=20;
+COMMIT;
+SELECT * FROM department;
+SELECT * FROM TABLE(
+SELECT projects FROM department WHERE did=20);
+
+
+-- ➤在PL/SQL使用可變陣列
+-- ex:在PL/SQL定義簡單類型可變陣列
+DECLARE 
+ TYPE project_varray IS VARRAY(3) OF VARCHAR2(50);
+ v_projects project_varray := project_varray(NULL,NULL,NULL);
+BEGIN 
+ v_projects(1) := 'JAVA SE';
+ v_projects(2) := 'JAVA EE';
+ v_projects(3) := 'Android';
+ FOR i IN v_projects.FIRST .. v_projects.LAST LOOP 
+  DBMS_OUTPUT.put_line(v_projects(i));
+ END LOOP;
+END;
+/
+
+
+-- ex:在PL/SQL定義複合類型可變陣列
+SELECT * FROM user_types;
+DROP TABLE department PURGE;
+DROP TYPE project_varray FORCE;
+CREATE OR REPLACE TYPE project_type AS OBJECT(
+projectid NUMBER,
+projectname VARCHAR2(50),
+projectfunds NUMBER,
+pubdate DATE
+);
+/
+
+DECLARE 
+ TYPE project_varray IS VARRAY(3) OF project_type NOT NULL;
+ v_projects project_varray := project_varray(
+  project_type(10,'<JAVA開發實戰經典>',79.8,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(11,'<ORACLEDB實戰經典>',69.8,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(12,'<Android開發實戰經典>',88,TO_DATE('2012-03-19','YYYY-MM-DD'))
+  );
+BEGIN 
+ FOR i IN v_projects.FIRST .. v_projects.LAST LOOP 
+  DBMS_OUTPUT.put_line('項目編號: ' || v_projects(i).projectid 
+  || ', 項目名稱: ' || v_projects(i).projectname 
+  || ', 金額: ' || v_projects(i).projectfunds 
+  || ', 發布日期: ' || v_projects(i).pubdate);
+ END LOOP;
+END;
+/

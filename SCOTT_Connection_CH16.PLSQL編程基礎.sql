@@ -1294,7 +1294,7 @@ ORA-06512: 在 line 8
 -- OTHERS。
 DECLARE
  v_data NUMBER;
- v_myexp EXCEPTION; -- 定義一個異常變量
+ --v_myexp EXCEPTION; -- 定義一個異常變量
  --PRAGMA EXCEPTION_INIT(v_myexp, -20689);
 BEGIN
  v_data := &inputData; -- 輸入數據

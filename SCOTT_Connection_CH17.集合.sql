@@ -994,41 +994,397 @@ BEGIN
  END IF; 
 END;
 /
+--============================================================================--
+--                                                                            --
+/* ※集合-集合函數                                                            */
+--                                                                            --
+--============================================================================--
+-- 簡述:"COUNT"、"FIRST"、"LAST"等操作這些都屬於集合的函數範疇。
+-- 集合函數的定義是從Oracle 8i的時候開始引入
+
+--------------------------------------------------------------------------------
+|No.|集合函數          |描述|
+--------------------------------------------------------------------------------
+|1  |pls_integer COUNT |返回集合之中保存的數據長度，此函數返回一個pls_integer的|
+|   |                  |數據                                                   |
+--------------------------------------------------------------------------------
+|2  |void DELETE(n[,m])|刪除集合中的數據，可以刪除指定第n個索引的數據，或者刪除|
+|   |                  |n~m個索引範圍內的數據                                  |
+--------------------------------------------------------------------------------
+|3  |boolean EXISTS(n) |判斷第n位索引的數據是否存在                            |
+--------------------------------------------------------------------------------
+|4  |EXTEND(n[,m])     |為集合擴充數據，其中參數n表示要擴充的長度，參數m表示擴 |
+|   |                  |充時使用當前集合指定索引上的數據進行內容填充，如果不設 |
+|   |                  |置任何參數則表示在集合的結尾擴充一個空內容             |
+--------------------------------------------------------------------------------
+|5  |數據類型FIRST     |返回集合元素中的最小下標值，可返回數據類型有pls_integer|
+|   |                  |、varchar2、long
+--------------------------------------------------------------------------------
+|6  |數據類型LAST      |返回集合元素中的最大下標值，可返回數據類型有pls_integer|
+|   |                  |、varchar2、long
+--------------------------------------------------------------------------------
+|7  |數據類型LIMIT     |返回集合元素中允許出現的最高下標值，此只能被陣列使用， |
+|   |                  |返回數據類型為pls_integer                              |
+--------------------------------------------------------------------------------
+|8  |數據類型NEXT(n)   |返回集合中的後一個下標值，如果沒有數據返回false，有數據|
+|   |                  |時可返回數據類型有pls_integer、varchar2、long          |
+--------------------------------------------------------------------------------
+|9  |數據類型PRIOR(n)  |返回集合中的前一個下標值，如果沒有數據返回false，有數據|
+|   |                  |時可返回數據類型有pls_integer、varchar2、long          |
+--------------------------------------------------------------------------------
+|10 |void TRIM([n])    |釋放集合的數據，如果沒有設置參數則刪除集合中的最高元素 |
+|   |                  |如果設置參數，則表示刪除指定個數的數據                 |
+--------------------------------------------------------------------------------
 
 
+-- ex:使用COUNT函數取得集合中的元素個數
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', '甲骨文', 'android', 
+ 'hibernate'); 
+BEGIN 
+  DBMS_OUTPUT.put_line('集合長度: ' || v_all.COUNT); 
+END;
+/
 
 
+-- ex:使用DELETE函數刪除一個數據
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', '甲骨文', 'android', 
+ 'hibernate'); 
+BEGIN 
+ v_all.DELETE(1); -- 刪除指定索引的數據
+ FOR i IN v_all.FIRST .. v_all.LAST LOOP 
+  DBMS_OUTPUT.put_line(v_all(i));
+ END LOOP; 
+END;
+/
 
 
+-- ex:使用DELETE函數刪除一個範圍的數據
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', '甲骨文', 'android', 
+ 'hibernate'); 
+BEGIN 
+ v_all.DELETE(1,3); -- 刪除指定索引範圍的數據
+ FOR i IN v_all.FIRST .. v_all.LAST LOOP 
+  DBMS_OUTPUT.put_line(v_all(i));
+ END LOOP;
+END;
+/
 
 
+-- ex:判斷某一數據是否存在
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', '甲骨文', 'android', 
+ 'hibernate'); 
+BEGIN  
+ IF v_all.EXISTS(1) THEN 
+  DBMS_OUTPUT.put_line('索引為1的數據存在');
+ END IF;
+ IF NOT v_all.EXISTS(10) THEN 
+  DBMS_OUTPUT.put_line('索引為10的數據不存在');
+ END IF;
+END;
+/
 
 
+-- ex:擴充集合長度
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', '甲骨文'); 
+BEGIN 
+ DBMS_OUTPUT.put_line('原始長度: ' || v_all.COUNT);
+ v_all.EXTEND(2); -- 擴充2個長度
+ DBMS_OUTPUT.put_line('擴充後長度: ' || v_all.COUNT);
+ v_all(4) := 'spring';
+ v_all(5) := 'hibernate';
+ FOR i IN v_all.FIRST .. v_all.LAST LOOP 
+  DBMS_OUTPUT.put_line(v_all(i));
+ END LOOP;
+END;
+/
 
 
+-- ex:擴充集合長度，並使用已有內容填充
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', '甲骨文'); 
+BEGIN 
+ DBMS_OUTPUT.put_line('原始長度: ' || v_all.COUNT);
+ v_all.EXTEND(2,1); -- 擴充2個長度，使用第1個元素填充
+ DBMS_OUTPUT.put_line('擴充後長度: ' || v_all.COUNT); 
+ FOR i IN v_all.FIRST .. v_all.LAST LOOP 
+  DBMS_OUTPUT.put_line(v_all(i));
+ END LOOP;
+END;
+/
 
 
+-- ex:使用LIMIT取得集合的最高下標
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray := list_varray('oracle', 'java', '甲骨文'); 
+BEGIN 
+ DBMS_OUTPUT.put_line('陣列集合的最大長度: ' || v_info.LIMIT);
+ DBMS_OUTPUT.put_line('陣列集合的數據量: ' || v_info.COUNT);
+END;
+/
 
 
+-- note:索引表中的數據索引不是連續的，可透過NEXT函數進行輸出
+-- ex:驗證NEXT函數
+DECLARE
+ TYPE info_index IS TABLE OF VARCHAR2(50) INDEX BY PLS_INTEGER;
+ v_info info_index; 
+ v_foot NUMBER;
+BEGIN 
+ v_info(1) := 'JAVA';
+ v_info(10) := 'ORACLE';
+ v_info(-10) := 'ANDROID';
+ v_info(-20) := 'ORACLEDB';
+ v_info(30) := 'JAVAWEB';
+ v_foot := v_info.FIRST; -- 找到第一個索引值
+ WHILE(v_info.EXISTS(v_foot)) LOOP -- 指定索引值存在
+  DBMS_OUTPUT.put_line('v_info(' || v_foot || ') = ' || v_info(v_foot));
+  v_foot := v_info.NEXT(v_foot); -- 取得下一個索引值
+  DBMS_OUTPUT.put_line('下一個索引值 = ' || v_foot);
+  DBMS_OUTPUT.put_line();
+ END LOOP; 
+END;
+/
 
 
+-- ex:驗證NEXT、PRIOR函數
+DECLARE
+ TYPE info_index IS TABLE OF VARCHAR2(50) INDEX BY PLS_INTEGER;
+ v_info info_index; 
+ v_foot NUMBER;
+BEGIN 
+ v_info(1) := 'JAVA';
+ v_info(10) := 'ORACLE';
+ v_info(-10) := 'ANDROID';
+ v_info(-20) := 'ORACLEDB';
+ v_info(30) := 'JAVAWEB';
+  DBMS_OUTPUT.put_line('索引為10的下一個索引是 ' || v_info.NEXT(10));  
+  DBMS_OUTPUT.put_line('索引為-10的上一個索引是 ' || v_info.PRIOR(-10));  
+END;
+/
 
 
+-- ex:驗證TRIM函數
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray := list_varray('oracle', 'java', '甲骨文', 'javaEE',
+ 'android');
+BEGIN 
+ DBMS_OUTPUT.put_line('刪除集合之前的數據量: ' || v_info.COUNT);
+ v_info.TRIM; -- 刪除1個數據
+ DBMS_OUTPUT.put_line('v_info.TRIM刪除集合之後的數據量: ' || v_info.COUNT);
+ v_info.TRIM(2); -- 刪除2個數據
+ DBMS_OUTPUT.put_line('v_info.TRIM(2)刪除集合之後的數據量: ' || v_info.COUNT);
+ FOR i IN v_info.FIRST .. v_info.LAST LOOP 
+  DBMS_OUTPUT.put_line(v_info(i));
+ END LOOP;
+END;
+/
+--============================================================================--
+--                                                                            --
+/* ※集合-處理集合異常                                                        */
+--                                                                            --
+--============================================================================--
+-- 說明:在進行集合操作之中，可能會由於用戶的編寫錯誤(例如:位初始化就直接去使用
+-- 集合、沒有指定索引的集合元素等)而導致程序中斷執行。
+
+-- 集合異常:
+------------------------------------------------------------------------------
+|No.|集合異常               |描述                                            |
+------------------------------------------------------------------------------
+|1  |COLLECTION_IS_NULL     |使用一個空集合變量時觸發                        |
+------------------------------------------------------------------------------
+|2  |NO_DATA_FOUND          |在索引表中使用一個已經被刪除或者索引值重複時觸發|
+------------------------------------------------------------------------------
+|3  |SUBSCRIPT_BEYOND_COUNT |訪問索引超過集合中元素個數時觸發                |
+------------------------------------------------------------------------------
+|4  |SUBSCRIPT_OUTSIDE_LIMIT|訪問索引超過集合的最大定義長度時觸發            |
+------------------------------------------------------------------------------
+|5  |VALUE_ERROR            |設置不能轉換為PLS_INTEGER索引時觸發             |
+------------------------------------------------------------------------------
 
 
+-- ex:處理集合未初始化異常
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray; -- 此時的集合變量沒有初始化
+BEGIN  
+ v_info(0) := 10;
+ DBMS_OUTPUT.put_line('');
+END;
+/
+-- 錯誤報告:ORA-06531: 參考未初始化之收集
 
 
+-- ex:處理集合未初始化異常
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray; -- 此時的集合變量沒有初始化
+BEGIN  
+ v_info(0) := 10; 
+EXCEPTION 
+ WHEN COLLECTION_IS_NULL THEN 
+  DBMS_OUTPUT.put_line('集合未初始化，無法使用。');
+END;
+/
 
 
+-- ex:處理訪問索引超過集合長度異常
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray := list_varray('oracle', 'java', '甲骨文', 'javaEE',
+ 'android');
+BEGIN 
+ DBMS_OUTPUT.put_line(v_info(8));
+EXCEPTION 
+ WHEN SUBSCRIPT_BEYOND_COUNT THEN 
+  DBMS_OUTPUT.put_line('索引值超過定義的元素個數。');
+END;
+/
+-- 錯誤報告:ORA-06532: 子命令檔超出限制
 
 
+-- ex:處理訪問索引超過集合最大定義長度異常
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray := list_varray('oracle', 'java', '甲骨文', 'javaEE',
+ 'android');
+BEGIN 
+ DBMS_OUTPUT.put_line(v_info(30));
+EXCEPTION 
+ WHEN SUBSCRIPT_OUTSIDE_LIMIT THEN 
+  DBMS_OUTPUT.put_line('索引值超過定義集合類型的最大元素個數。');
+END;
+/
+-- 錯誤報告:ORA-06532: 子命令檔超出限制
 
 
+-- ex:設置錯誤的索引數據
+DECLARE
+ TYPE list_varray IS VARRAY(8) OF VARCHAR2(50);
+ v_info list_varray := list_varray('oracle', 'java', '甲骨文', 'javaEE',
+ 'android');
+BEGIN 
+ DBMS_OUTPUT.put_line(v_info('1')); -- 文數字自動轉型
+ DBMS_OUTPUT.put_line(v_info('a')); -- 索引類型不同
+EXCEPTION 
+ WHEN VALUE_ERROR THEN 
+  DBMS_OUTPUT.put_line('索引值類型錯誤。');
+END;
+/
+-- 錯誤報告:ORA-06502: PL/SQL: 數字或值錯誤: 字元到數字轉換錯誤
 
 
+-- ex:處理索引表集合中訪問已刪除數據集合異常
+DECLARE
+ TYPE info_index IS TABLE OF VARCHAR2(20) INDEX BY PLS_INTEGER;
+ v_info info_index;
+BEGIN 
+ v_info(1) := 'JAVA';
+ v_info(2) := 'ORACLE';
+ v_info(3) := 'ANDROID';
+ v_info.DELETE(1); -- 刪除數據
+ DBMS_OUTPUT.put_line(v_info(1)); -- 此索引沒有數據
+ DBMS_OUTPUT.put_line(v_info(2));
+ DBMS_OUTPUT.put_line(v_info(3));
+EXCEPTION 
+ WHEN NO_DATA_FOUND THEN 
+  DBMS_OUTPUT.put_line('數據已經被刪除。');
+END;
+/
+-- 錯誤報告:ORA-01403: 找不到資料
+--============================================================================--
+--                                                                            --
+/* ※集合-使用FORALL批量綁定                                                  */
+--                                                                            --
+--============================================================================--
+-- 說明:在用戶透過PL/SQL編寫程序時，PL/SQL通常會與SQL在操作上進行交互，當用戶透
+-- 過PL/SQL執行一條更新語句時，SQL會將執行更新後的數據返回給PL/SQL，這樣用戶才
+-- 可以在PL/SQL之中取得更新後的數據。但是如果在PL/SQL之中要進行大量的數據操作時
+-- ，這種方式就會使程序的執行性能大為降低。例如:如下是一個透過PL/SQL執行多行數據
+-- 更新的操作程序塊。
+DECLARE 
+ TYPE emp_varray IS VARRAY(8) OF emp.empno%TYPE;
+ v_empno emp_varray := emp_varray(7369, 7566, 7788, 7839, 7902);
+BEGIN 
+ FOR i IN v_empno.FIRST .. v_empno.LAST LOOP 
+  UPDATE emp SET sal=9000 WHERE empno=v_empno(i);
+ END LOOP;
+END;
+/
+-- 如果按照以上的作法，那麼最終的形式就是有多少個集合元素，就需要執行多少次的更
+-- 新操作。
 
 
+-- ex:查詢更新
+SELECT * FROM emp WHERE empno IN(7369, 7566, 7788, 7839, 7902);
+ROLLBACK;
+-- 此時一共向數據庫發出了5次更新操作。如果這樣操作，要是更新的內容很多就會很浪費
+-- 時間。最好的作法是一次性向數據庫發出n條的更新操作，採用批次處理的方式完成。
 
 
+-- ➤FORALL
+-- 說明:是將所有需要更新的操作(增刪修)一次性發送給數據庫。
+-- 語法:FORALL 變量 IN 集合初值 .. 集合最高值 SLQ語句;
+-- ex:
+DECLARE 
+ TYPE emp_varray IS VARRAY(8) OF emp.empno%TYPE;
+ v_empno emp_varray := emp_varray(7369, 7566, 7788, 7839, 7902);
+BEGIN 
+ FORALL i IN v_empno.FIRST .. v_empno.LAST 
+  UPDATE emp SET sal=9000 WHERE empno=v_empno(i);
+ FOR i IN v_empno.FIRST .. v_empno.LAST LOOP 
+  DBMS_OUTPUT.put_line('員工編號: ' || v_empno(i) 
+  || ', 更新操作受影響的數據橫列為: ' || SQL%BULK_ROWCOUNT(i));
+ END LOOP;
+END;
+/
+SELECT * FROM emp WHERE empno IN(7369, 7566, 7788, 7839, 7902);
+ROLLBACK;
+--============================================================================--
+--                                                                            --
+/* ※集合-BULK COLLECT批量接收數據                                            */
+--                                                                            --
+--============================================================================--
+-- 說明:使用FORALL可以一次性向數據庫之中發出多條SQL命令，而使用BULK COLLECT可以
+-- 一次性從數據庫之中取出多條數據。
+
+-- ex:批量接收查詢數據
+DECLARE 
+ TYPE ename_varray IS VARRAY(8) OF emp.ename%TYPE; -- 定義一直行欄位類型
+ v_ename ename_varray;
+BEGIN  
+  SELECT ename BULK COLLECT INTO v_ename FROM emp 
+  WHERE deptno=10;
+ FOR i IN v_ename.FIRST .. v_ename.LAST LOOP 
+  DBMS_OUTPUT.put_line('10部門員工姓名: ' || v_ename(i));
+ END LOOP;
+END;
+/
 
 
+-- ex:批量接收表數據
+DECLARE 
+ TYPE dept_nested IS TABLE OF dept%ROWTYPE; -- 定義一橫列紀錄類型
+ v_dept dept_nested;
+BEGIN  
+  SELECT * BULK COLLECT INTO v_dept 
+  FROM dept; -- 所有dept的數據都保存在v_dept集合(嵌套表)裡面
+ FOR i IN v_dept.FIRST .. v_dept.LAST LOOP 
+  DBMS_OUTPUT.put_line('部門編號: ' || v_dept(i).deptno 
+  || ', 部門名稱: ' || v_dept(i).dname 
+  || ', 位置: ' || v_dept(i).loc);
+ END LOOP;
+END;
+/

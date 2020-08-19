@@ -132,7 +132,7 @@ END;
 -- 對於紀錄類型除了保存數據之外，最大的特徵還在於可以直接利用紀錄類型進行數據操
 -- 作。
 -- note:增加數據過程中，紀錄類型內容中欄位定義的順序要和表中的欄位順序保持一致
--- ex:利用紀錄賴型保存數據，實現數據的增加
+-- ex:利用紀錄類型保存數據，實現數據的增加
 DECLARE
  TYPE dept_type IS RECORD(
   deptno dept.deptno%TYPE,
@@ -301,7 +301,7 @@ END;
 CREATE [OR REPLACE] TYPE 類型名稱 AS|IS TABLE OF 數據類型 [NOT NULL];
 /
 
-創建表指定嵌套表存儲哭間名稱:
+創建表指定嵌套表存儲空間名稱:
 CREATE TABLE 表名稱(
  欄位名稱 類型
  ...
@@ -373,7 +373,7 @@ WHERE pro.column_value='<JAVA WEB開發實戰經典>';
 
 
 -- ➤複合類型嵌套表
--- 簡述:在子表中定義多個欄位，其中外鍵約束參照父類主鍵或唯一約束，而父表的欄位
+-- 簡述:在子表中定義多個欄位，其中外鍵約束參照父表主鍵或唯一約束，而父表的欄位
 -- 關聯變成包含子表定義多個欄位的複合類型。
 /*
 創建新的對象類型
@@ -832,3 +832,203 @@ BEGIN
  END LOOP;
 END;
 /
+--============================================================================--
+--                                                                            --
+/* ※集合-集合運算符                                                          */
+--                                                                            --
+--============================================================================--
+-- 簡述:對於集合的數據類型，為了方便操作，在Oracle 11g之後也進行了引入，這些符號
+-- 只與嵌套表和可變陣列一起使用。
+
+-------------------------------------------------------------------------------
+|No.|集合運算符                    |描述                                      |
+-------------------------------------------------------------------------------
+|1  |CARDINALITY(集合)             |取得集合中的所有元素個數                  |
+-------------------------------------------------------------------------------
+|2  |變量 IS [NOY] EMPTY           |判斷集合是否為NULL                        |
+-------------------------------------------------------------------------------
+|3  |變量 MEMBER OF 集合           |判斷某一數據是否是集合中的成員            |
+-------------------------------------------------------------------------------
+|4  |集合1 MULTISET EXCEPT 集合2   |從一個集合中刪除另一個集合中的相同部份數據|
+|   |                              |，並返回新集合                            |
+-------------------------------------------------------------------------------
+|5  |集合1 MULTISET INTERSECT 集合2|取出兩個集合之中的相同部份並返回新集合    |
+-------------------------------------------------------------------------------
+|6  |集合1 MULTISET UNION 集合2    |將兩個集合合併為一個集合返回              |
+-------------------------------------------------------------------------------
+|7  |SET                           |集合中的重複元素，類素於DISTINCT操作，    |
+|   |                              |語法:"SET(集合)"。也可以利用SET檢查變量是 |
+|   |                              |否為null，語法:"變量 IS [NOT]A SET"       |
+-------------------------------------------------------------------------------
+|8  |集合1 SUBMULTISET OF 集合2    |判斷集合1是否是集合2的子集合              |
+-------------------------------------------------------------------------------
+
+-- ➤集合運算符
+-- ex:驗證CARDINALITY運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('a', 'a', 'b', 'c', 'c', 'd', 'e');
+BEGIN
+ DBMS_OUTPUT.put_line('集合長度: ' || CARDINALITY(v_all));
+END;
+/
+
+
+-- ex:驗證CARDINALITY運算符，使用SET運算符取消重複數據
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('a', 'a', 'b', 'c', 'c', 'd', 'e');
+BEGIN
+ DBMS_OUTPUT.put_line('集合長度: ' || CARDINALITY(SET(v_all)));
+END;
+/
+
+
+-- ex:驗證EMPTY運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA list_nested := list_nested('oracle', 'java', 'google');
+ v_allB list_nested := list_nested();
+BEGIN
+ IF v_allA IS NOT EMPTY THEN
+  DBMS_OUTPUT.put_line('v_allA不是一個空集合');
+ END IF;
+ IF v_allB IS EMPTY THEN
+  DBMS_OUTPUT.put_line('v_allB是一個空集合');
+ END IF;
+END;
+/
+
+
+-- ex:驗證MEMBER OF運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_all list_nested := list_nested('oracle', 'java', 'google');
+ v_str VARCHAR2(10) := 'oracle'; -- 要查詢的數據
+BEGIN
+ IF v_str MEMBER OF v_all THEN
+  DBMS_OUTPUT.put_line('oracle字串存在');
+ END IF; 
+END;
+/
+
+
+-- ex:驗證MULTISET EXCEPT運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA list_nested := list_nested('oracle', 'java', 'google');
+ v_allB list_nested := list_nested('google', 'oracle');
+ v_newlist list_nested;
+BEGIN
+ v_newlist := v_allA MULTISET EXCEPT v_allB;
+ FOR i IN 1 .. v_newlist.COUNT LOOP 
+  DBMS_OUTPUT.put_line(v_newlist(i));
+ END LOOP; 
+END;
+/
+
+
+-- ex:驗證MULTISET INTERSECT運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA list_nested := list_nested('oracle', 'java', 'google');
+ v_allB list_nested := list_nested('google', 'oracle');
+ v_newlist list_nested;
+BEGIN
+ v_newlist := v_allA MULTISET INTERSECT v_allB;
+ FOR i IN 1 .. v_newlist.COUNT LOOP 
+  DBMS_OUTPUT.put_line(v_newlist(i));
+ END LOOP; 
+END;
+/
+
+
+-- ex:驗證MULTISET UNION運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA list_nested := list_nested('oracle', 'java', 'google');
+ v_allB list_nested := list_nested('google', 'oracle');
+ v_newlist list_nested;
+BEGIN
+ v_newlist := v_allA MULTISET UNION v_allB;
+ FOR i IN 1 .. v_newlist.COUNT LOOP 
+  DBMS_OUTPUT.put_line(v_newlist(i));
+ END LOOP; 
+END;
+/
+
+
+-- ex:驗證SET運算符;判斷是否為集合
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA list_nested := list_nested('oracle', 'java', 'google'); 
+BEGIN
+ IF v_allA IS A SET THEN
+  DBMS_OUTPUT.put_line('v_allA是一個集合');
+ END IF; 
+END;
+/
+
+
+-- ex:驗證SET運算符;判斷是否為集合
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA VARCHAR2(20) := 'a'; 
+BEGIN
+ IF v_allA IS A SET THEN
+  DBMS_OUTPUT.put_line('v_allA是一個集合');
+ END IF; 
+END;
+/
+-- 錯誤報告:PLS-00306: 呼叫 'IS A SET' 時使用的引數數目或引數類型錯誤
+
+
+-- ex:驗證SUBMULTISET運算符
+DECLARE
+ TYPE list_nested IS TABLE OF VARCHAR2(50) NOT NULL;
+ v_allA list_nested := list_nested('oracle', 'java', 'google');
+ v_allB list_nested := list_nested('java', 'google');
+BEGIN
+ IF v_allB SUBMULTISET v_allA THEN
+  DBMS_OUTPUT.put_line('v_allB是v_allA的子集合');
+ END IF; 
+END;
+/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

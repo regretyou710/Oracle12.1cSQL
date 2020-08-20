@@ -475,4 +475,8 @@ WHERE grantee LIKE 'C##%' ORDER BY grantee;
 -- ex:使用系統管理員，查看用戶的套用角色
 SELECT * FROM dba_role_privs
 WHERE grantee LIKE 'C##%' ORDER BY grantee;
+
+-- 每一個用戶都有自己的空間使用配額，所以還可以使用"dba_ts_quotas"數據字典查看。
+SELECT * FROM dba_ts_quotas;
+
 */

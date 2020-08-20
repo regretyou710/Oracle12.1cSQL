@@ -39,7 +39,7 @@ CREATE TABLE emp (
 );
 
 CREATE TABLE bonus (
-    enamE VARCHAR2(10),
+    ename VARCHAR2(10),
     job VARCHAR2(9),
     sal NUMBER,
     comm NUMBER

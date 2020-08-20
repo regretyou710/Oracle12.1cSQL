@@ -4,7 +4,22 @@
 SCOTT12C_CDBConnection|預設   |orcl12c|        |
 SYS12C_CDBConnection  |SYSDBA |orcl12c|        |
 SYS12C_PDBConnection  |SYSDBA |       |pdborcl |
+
+
+PLSQL Developer登入
+Username:sys
+Password:change_on_install
+Database:localhost:1522/pdborcl
+Connect as:SYSDBA
+
+Username:sys
+Password:change_on_install
+Database:orcl12c
+Connect as:SYSDBA
 */
+
+
+
 
 
 -- Oracle sqlplus.exe常用操作命令

@@ -268,6 +268,8 @@ SELECT * FROM user_procedures;
 -- ③IN OUT(地址傳遞):可以將值傳到子程序中，同時也會將子程序中對變量的修改返回到調
 -- 用處。
 -- ▲IN就屬於基本數據類型傳遞，IN OUT屬於引用數據類型傳遞。
+-- ▲IN:有去無回。
+
 
 -- ➤IN模式
 -- ex:觀察IN參數模式
@@ -927,29 +929,21 @@ EXEC c##scott.bonus_proc;
 -- 這樣一來，雖然在不同的用戶中，但是卻可以在自己的資源表中實現數據的更新操作。
 
 
+-- ➤利用Java調用子程序
+-- ex:定義一個orcl_proc過程
+CREATE OR REPLACE PROCEDURE orcl_proc(
+  p1 IN NUMBER,
+  p2 IN OUT NUMBER,
+  P3 OUT NUMBER
+ )
+AS 
+BEGIN 
+ p2 := 20; -- IN OUT模式
+ p3 := 30; -- OUT模式
+END;
+/
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-- ex:在Eclipse中編寫程序，調用orcl_proc過程
+-- Reference Path: \myeclipsecode\Demo_OracleDB\src\tw\com\procedure\Demo01.java
+-- Reference GitHub Path: https://github.com/regretyou710/Demo_OracleDB.git

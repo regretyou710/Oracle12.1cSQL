@@ -19,17 +19,14 @@ Connect as:SYSDBA
 */
 
 
-
-
-
+----------------------------------------------------------------------------------
 -- Oracle sqlplus.exe常用操作命令
 
 -- 如何重置密碼 oracle sys和system
-①	打開cmd介面，輸入sqlplus /nolog
-② 	在dos窗口中輸入 conn/@orcl as sysdba; 注意：orcl是你的資料庫實例。
-③-1在dos窗口中輸入 alter user sys identified by change_on_install;
-③-2在dos窗口中輸入 alter user system identified by manager;
-
+①打開cmd介面，輸入sqlplus /nolog
+②在dos窗口中輸入 conn/@orcl as sysdba; 注意：orcl是你的資料庫實例。
+③在dos窗口中輸入 alter user sys identified by change_on_install;
+③在dos窗口中輸入 alter user system identified by manager;
 
 
 -- 設置每行顯示n個字元
@@ -95,6 +92,43 @@ ALTER PLUGGABLE DATABASE ALL OPEN;
 imp system/manager@localhost:1521/pdborcl fromuser=SCOTT touser=SCOTT file=C:\Users\user\Desktop\SCOTT.dmp
 
 
-
 -- 顯示更多時間訊息
 ALTER SESSION SET NLS_DATE_FORMAT='yyyy-mm-dd hh24:mi:ss';
+
+----------------------------------------------------------------------------------
+➤怎樣查看Oracle的數據庫名稱sid
+用sys登入
+執行 select name from V$database; 或是執行select * from  V$database;
+不過執行第二個顯示的內容太多了不好找自己想要的結果
+你也可以先用desc V$database;語句查看一下V$database有什麼插入然後選擇自己想要的分段進行選擇
+
+➤查看實例名稱(sid):
+select instance_name from  V$instance;
+一般而言情況下sid與你的數據庫的名稱是一樣的
+
+➤創建tnsnames.ora
+使用sid或service_name都可以連接數據庫
+1、service_name:
+
+ORASTAT =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 168.168.10.10)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (service_name = orastat)
+    )
+  )
+
+2、sid:
+
+ORASTAT =
+  (DESCRIPTION =
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = 168.168.10.10)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (sid = orastat)
+    )
+  )
+----------------------------------------------------------------------------------

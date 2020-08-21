@@ -30,7 +30,7 @@
 -- ex:創建一張基本工資大於2000的員工訊息的視圖
 CREATE VIEW v_myview AS SELECT * FROM emp WHERE sal>2000;
 -- 此時是希望把這條語句的操作直接封裝在視圖之中，即:日後利用視圖來解決查詢問題。
--- 在Oracle 10gR2這個版本之後，默認情況架scott用戶沒有創建視圖權限。
+-- 在Oracle 10gR2這個版本之後，默認情況下scott用戶沒有創建視圖權限。
 -- 執行CMD:sqlplus /nolog
 CONN sys/change_on_install AS SYSDBA;
 GRANT CREATE VIEW TO c##scott;

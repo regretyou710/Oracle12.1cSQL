@@ -478,7 +478,7 @@ EXEC dept_insert_proc(83,'oracle','加州',:v_result); -- 調用過程
 PRINT v_result;
 
 
--- 如過不使用過程而使用函數那麼會更加方便，因為函數可以直接將操作的結果返回。
+-- 如果不使用過程而使用函數那麼會更加方便，因為函數可以直接將操作的結果返回。
 -- ex:改用函數實現同樣功能
 CREATE OR REPLACE FUNCTION dept_insert_fun(
  p_dno dept.deptno%TYPE,
@@ -516,7 +516,7 @@ END;
 
 -- ➤子程序嵌套
 -- 簡述:在一個子程序中也可以嵌套其他子程序，就好比內部的PL/SQL塊。相當於現在定義
--- 的內部子程序。
+-- 了內部子程序。
 -- ex:定義子程序嵌套
 CREATE OR REPLACE PROCEDURE dept_insert_proc(
  p_dno dept.deptno%TYPE,
@@ -654,7 +654,7 @@ BEGIN
 END;
 /
 -- 錯誤報告:ORA-06550: 第 6 行, 第 3 個欄位: PLS-00313: 此範疇沒有宣告 'B_PROC'
--- 此時編譯十一定會出現錯誤，因為有一個順序過程，所以子程序嵌套互相調用時，就必須
+-- 此時編譯時一定會出現錯誤，因為有一個順序過程，所以子程序嵌套互相調用時，就必須
 -- 採用前導聲明方式來解決問題。
 
 

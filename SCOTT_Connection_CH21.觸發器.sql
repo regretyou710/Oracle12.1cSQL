@@ -585,7 +585,7 @@ BEGIN
  END IF;
 END;
 /
--- 此時對dpet表的所有修改都會進行紀錄。
+-- 此時對dept表的所有修改都會進行紀錄。
 
 
 -- ex:向dept表增加一系列紀錄
@@ -726,7 +726,7 @@ UPDATE info SET id=2;
 -- 據列個數，但由於操作的數據沒有更新結束，所以是無法得到個數的。
 --============================================================================--
 --                                                                            --
-/* ※觸發器-複合觸發器                                                            */ 
+/* ※觸發器-複合觸發器                                                        */ 
 --                                                                            --
 --============================================================================--
 -- 說明:複合觸發器是在Oracle 11g之後引入進來的一種新結構的觸發器，複合觸發器既是
@@ -883,11 +883,775 @@ VALUES (8104, 'judy', 'salesman', SYSDATE, 5000, null, 7566, 20);
 INSERT INTO emp(empno, ename, job, hiredate, sal, comm, mgr, deptno) 
 VALUES (8103, 'judy', 'salesman', SYSDATE, 1680, null, 7566, 20);
 -- 錯誤報告:SQL 錯誤: ORA-20008: 在週末時間不允許更新emp表數據
+--============================================================================--
+--                                                                            --
+/* ※觸發器-instead-of觸發器                                                  */ 
+--                                                                            --
+--============================================================================--
+-- 簡述:透過替代觸發器解決更新視圖十多的數據表一起更新的問題。
+/*
+創建語法:
+CREATE [OR REPLACE] TRIGGER 觸發器名稱
+INSTEAD OF [INSERT|UPDATE|UPDATE OF 欄位名稱[,欄位名稱,...]|DELETE] ON
+視圖名稱
+[FOR EACH ROW]
+[WHEN 觸發條件]
+[DECLARE]
+ [程序聲明部份;]
+BEGIN 
+ 程序代碼部份;
+END[觸發器名稱];
+/ 
+*/
 
 
+-- ➤複雜視圖的更新問題
+-- ex:創建包含20部門員工訊息的複雜視圖
+CREATE OR REPLACE VIEW v_myview 
+AS 
+ SELECT e.empno, e.ename, e.job, e.sal, d.deptno, d.dname, d.loc 
+ FROM emp e, dept d 
+ WHERE e.deptno=d.deptno AND d.deptno=20;
+ 
+ 
+-- ex:向視圖增加紀錄
+INSERT INTO v_myview(empno, ename, job, sal, deptno, dname, loc) 
+VALUES (6688, '谷歌', 'CLERK', 2000, 50, '資訊', '加州'); 
+-- 錯誤報告:SQL 錯誤: ORA-01776: 無法透過結合視觀表來修改一個以上的基本表格
+-- 因為這個視圖屬於複雜視圖，不是簡單視圖。如果現在希望操作可以成功，那麼只能利用
+-- 替代觸發器完成。
 
 
+-- ex:創建一個替代觸發器，實現視圖更新操作
+CREATE OR REPLACE TRIGGER view_trigger 
+INSTEAD OF INSERT ON v_myview 
+FOR EACH ROW 
+DECLARE 
+ v_empCount NUMBER;
+ v_deptCount NUMBER;
+BEGIN 
+ -- 判斷要增加的員工是否存在
+ SELECT COUNT(empno) INTO v_empCount FROM emp WHERE empno=:new.empno;
+ IF v_empCount=0 THEN 
+  INSERT INTO emp(empno, ename, job, sal) 
+  VALUES (:new.empno, :new.ename, :new.job, :new.sal);
+ END IF;
+ 
+ -- 判斷要增加的部門是否存在
+ SELECT COUNT(deptno) INTO v_deptCount FROM dept WHERE deptno=:new.deptno; 
+ IF v_deptCount=0 THEN
+  INSERT INTO dept(deptno, dname, loc) 
+  VALUES (:new.deptno, :new.dname, :new.loc);
+ END IF; 
+END;
+/
 
 
+-- ex:向視圖增加紀錄
+INSERT INTO v_myview(empno, ename, job, sal, deptno, dname, loc) 
+VALUES (6688, '谷歌', 'CLERK', 2000, 50, '資訊', '加州'); 
+SELECT * FROM emp;
+SELECT * FROM dept;
+/*
+因為建立視圖時emp表沒有定義e.deptno欄位所以insert時是null，查詢也就沒有資料
+SELECT * FROM v_myview;
+*/
 
 
+-- ex:向視圖表執行更新操作
+UPDATE v_myview SET ename='史密斯', sal=2000, dname='技術部' WHERE empno=7369;
+-- 錯誤報告:SQL 錯誤: ORA-01776: 無法透過結合視觀表來修改一個以上的基本表格
+-- 此時視圖也無法進行修改，所以還需透過替代觸發器進行。
+
+
+-- ex:創建一個替代觸發器，實現視圖更新操作
+-- note:更新emp表中有而視圖沒有的數據是沒有作用的
+CREATE OR REPLACE TRIGGER view_trigger 
+INSTEAD OF UPDATE ON v_myview 
+FOR EACH ROW 
+DECLARE 
+BEGIN
+ UPDATE emp SET ename=:new.ename, job=:new.job, sal=:new.sal 
+ WHERE empno=:new.empno; 
+
+ UPDATE dept SET dname=:new.dname, loc=:new.loc WHERE deptno=:new.deptno;
+END;
+/
+
+
+-- ex:編寫刪除功能
+-- 如果刪除的是視圖中的數據，某一個部門沒有員工，那麼就連部門一起刪除。
+-- 創建替代觸發器
+CREATE OR REPLACE TRIGGER view_trigger 
+INSTEAD OF DELETE ON v_myview 
+FOR EACH ROW 
+DECLARE 
+ v_empCount NUMBER;
+BEGIN
+ DELETE FROM emp WHERE empno=:old.empno;
+
+ -- 判斷要刪除的部門員工數量是否存在 
+ SELECT COUNT(empno) INTO v_empCount FROM emp WHERE deptno=:old.deptno;
+ -- 此部門沒有人
+ IF v_empCount=0 THEN 
+  DELETE FROM dept WHERE deptno=:old.deptno;
+ END IF;
+END;
+/
+
+
+-- ex:刪除視圖中所有20部門員工
+DELETE FROM v_myview WHERE deptno=20;
+
+
+-- 以上三個功能可以合在一起，使用觸發器謂詞創建一個觸發器完成。
+-- ex:定義觸發器
+CREATE OR REPLACE TRIGGER view_trigger 
+INSTEAD OF INSERT OR UPDATE OR DELETE ON v_myview 
+FOR EACH ROW 
+DECLARE 
+ v_empCount NUMBER;
+ v_deptCount NUMBER;
+BEGIN 
+ IF INSERTING THEN 
+  -- 判斷要增加的員工是否存在
+  SELECT COUNT(empno) INTO v_empCount FROM emp WHERE empno=:new.empno;
+  IF v_empCount=0 THEN 
+   INSERT INTO emp(empno, ename, job, sal) 
+   VALUES (:new.empno, :new.ename, :new.job, :new.sal);
+  END IF;
+ 
+  -- 判斷要增加的部門是否存在
+  SELECT COUNT(deptno) INTO v_deptCount FROM dept WHERE deptno=:new.deptno; 
+  IF v_deptCount=0 THEN
+   INSERT INTO dept(deptno, dname, loc) 
+   VALUES (:new.deptno, :new.dname, :new.loc);
+  END IF;
+ ELSIF UPDATING THEN 
+  UPDATE emp SET ename=:new.ename, job=:new.job, sal=:new.sal 
+  WHERE empno=:new.empno;
+  
+  UPDATE dept SET dname=:new.dname, loc=:new.loc WHERE deptno=:new.deptno;
+ ELSE 
+  DELETE FROM emp WHERE empno=:old.empno;
+
+  -- 判斷要刪除的部門員工數量是否存在 
+  SELECT COUNT(empno) INTO v_empCount FROM emp WHERE deptno=:old.deptno;
+  -- 此部門沒有人
+  IF v_empCount=0 THEN 
+   DELETE FROM dept WHERE deptno=:old.deptno;
+  END IF;
+ END IF; 
+END;
+/
+
+
+-- ➤在嵌套表上定義替代觸發器
+-- 說明:嵌套表是一種Oracle中特殊的結構，如果創建的視圖包含嵌套表的定義，那麼在
+-- 進行視圖更新的時候，也必須透過替代觸發器進行操作。
+-- ex:定義一個嵌套表
+-- 步驟一:定義複合類型
+DROP TYPE project_type FORCE;
+DROP TYPE project_nested FORCE;
+CREATE OR REPLACE TYPE project_type AS OBJECT(
+ projectid NUMBER,
+ projectname VARCHAR2(50),
+ projectfunds NUMBER,
+ pubdate DATE
+);
+/
+-- 步驟二:定義嵌套表類型
+CREATE OR REPLACE TYPE project_nested 
+AS 
+TABLE OF project_type NOT NULL;
+/
+-- 步驟三:創建嵌套表類型的數據表
+DROP TABLE department PURGE;
+CREATE TABLE department(
+ did NUMBER,
+ deptname VARCHAR2(50) NOT NULL,
+ projects project_nested,
+ CONSTRAINT pk_did PRIMARY KEY(did)
+) NESTED TABLE projects STORE AS project_nested_table;
+-- 步驟四:增加測試數據
+INSERT INTO department (did,deptname,projects) 
+VALUES (10,'甲骨文',
+ project_nested(
+  project_type(1,'JAVA實戰開發',550,TO_DATE('2004-09-27','YYYY-MM-DD')),
+  project_type(2,'Android實戰開發',450,TO_DATE('2010-07-19','YYYY-MM-DD'))
+ ));
+INSERT INTO department (did,deptname,projects) 
+VALUES (20,'ORACLE出版部',
+ project_nested(
+  project_type(10,'<JAVA開發實戰經典>',79.8,TO_DATE('2008-08-13','YYYY-MM-DD')),
+  project_type(11,'<C#開發實戰經典>',69.8,TO_DATE('2010-08-27','YYYY-MM-DD')),
+  project_type(12,'<Android開發實戰經典>',88,TO_DATE('2012-03-19','YYYY-MM-DD'))
+ ));
+COMMIT;
+
+
+-- ex:定義與嵌套表有關的視圖
+DROP VIEW v_department10;
+CREATE OR REPLACE VIEW v_department10
+AS
+ SELECT did, deptname, projects FROM department
+ WHERE did=10;
+ 
+
+-- ex:查看v_department10表中數據
+SELECT * FROM v_department10;
+
+
+-- ex:查看一個部門的全部項目訊息
+SELECT * FROM TABLE(
+SELECT projects FROM v_department10 WHERE did=10);
+
+
+-- ex:對視圖進行數據增加
+INSERT INTO TABLE(SELECT projects FROM v_department10) 
+VALUES (3,'WEB框架應用',600,TO_DATE('2013-02-19','YYYY-MM-DD'));
+-- 錯誤報告:SQL 錯誤: ORA-25015: 無法在此巢狀表格視觀表資料欄上執行 DML
+
+
+-- ex:對視圖進行數據修改
+UPDATE TABLE(SELECT projects FROM v_department10) pro SET
+VALUE(pro)=project_type(2,'Android高級應用',555,TO_DATE('2013-04-10','YYYY-MM-DD')) 
+WHERE pro.projectid=2;
+-- 錯誤報告:SQL 錯誤: ORA-25015: 無法在此巢狀表格視觀表資料欄上執行 DML
+
+
+-- ex:對視圖進行數據刪除
+DELETE FROM TABLE(SELECT projects FROM v_department10) pro 
+WHERE pro.projectid=2;
+-- 錯誤報告:SQL 錯誤: ORA-25015: 無法在此巢狀表格視觀表資料欄上執行 DML
+
+
+-- 此時增加、修改、刪除都無法操作，如果希望三者可以進行那麼就必須使用替代觸發器
+-- 。在Oracle中為了找到標記的數據橫列，提供了一個":parent.欄位"。
+-- ex:定義替代觸發器，實現更新
+DROP TRIGGER nested_trigger;
+CREATE OR REPLACE TRIGGER nested_trigger 
+INSTEAD OF INSERT OR UPDATE OR DELETE 
+ON NESTED TABLE projects OF v_department10 -- 在視圖的嵌套欄位上
+DECLARE  
+BEGIN 
+ IF INSERTING THEN 
+  INSERT INTO TABLE(SELECT projects FROM department WHERE did=:parent.did) 
+  VALUES (:new.projectid, :new.projectname, :new.projectfunds, :new.pubdate);
+ ELSIF UPDATING THEN 
+  UPDATE TABLE(SELECT projects FROM department WHERE did=:parent.did) pro SET
+  VALUE(pro)=project_type(
+  :new.projectid, 
+  :new.projectname, 
+  :new.projectfunds, :new.pubdate) 
+  WHERE pro.projectid=:old.projectid;
+ ELSIF DELETING THEN 
+  DELETE FROM TABLE(SELECT projects FROM department WHERE did=:parent.did) pro 
+  WHERE pro.projectid=:old.projectid;
+ ELSE 
+  NULL;
+ END IF; 
+END;
+/
+
+
+-- ex:對視圖進行數據增加
+INSERT INTO TABLE(SELECT projects FROM v_department10) 
+VALUES (3,'WEB框架應用',600,TO_DATE('2013-02-19','YYYY-MM-DD'));
+
+
+-- ex:對視圖進行數據修改
+UPDATE TABLE(SELECT projects FROM v_department10) pro SET
+VALUE(pro)=project_type(2,'Android高級應用',555,TO_DATE('2013-04-10','YYYY-MM-DD')) 
+WHERE pro.projectid=2;
+
+
+-- ex:對視圖進行數據刪除
+DELETE FROM TABLE(SELECT projects FROM v_department10) pro 
+WHERE pro.projectid=2;
+
+
+-- ▲實際上對於替代觸發器，還是不建議過多使用。
+--============================================================================--
+--                                                                            --
+/* ※觸發器-DDL觸發器                                                         */ 
+--                                                                            --
+--============================================================================--
+-- 說明:當創建、修改或者刪除數據庫對象時，也會引起相應的觸發器操作事件，而此時就
+-- 可以利用觸發器來對這些數據庫對象的DDL操作進行監控。
+/*
+DDL觸發器的創建語法:
+CREATE [OR REPLACE] TRIGGER 觸發器名稱
+[BEFORE|AFTER|INSTEAD OF][DDL事件] ON [DATABASE|SCHEMA]
+[WHEN 觸發條件]
+[DECLARE]
+ [程序聲明部份;] 
+BEGIN
+ 程序代碼部份;
+END[觸發器名稱];
+/
+*/
+
+/*
+DDL觸發器支持事件
+-------------------------------------------------------------------------
+|No.|DDL事件                |觸發時機    |描述                          | 
+-------------------------------------------------------------------------
+|1  |ALTER                  |BEFORE/AFTER|修改對象的結構時觸發          |
+|2  |ANALYZE                |BEFORE/AFTER|分析數據庫對象時觸發          |
+|3  |ASSOCIATE STATISTICS   |BEFORE/AFTER|啟動統計數據庫對象時觸發      |
+|4  |AUDIT                  |BEFORE/AFTER|開起審核數據庫對象時觸發      |
+|5  |COMMENT                |BEFORE/AFTER|為數據庫對象設置註解訊息時觸發|
+|6  |CREATE                 |BEFORE/AFTER|創建數據庫對象時觸發          |
+|7  |DDL                    |BEFORE/AFTER|針對出現的所有DDL事件觸發     |
+|8  |DISASSOCIATE STATISTICS|BEFORE/AFTER|關閉統計數據庫對象時觸發      |
+|9  |DROP                   |BEFORE/AFTER|刪除數據庫對象時觸發          |
+|10 |GRANT                  |BEFORE/AFTER|用戶授權時觸發                |
+|11 |NOAUDIT                |BEFORE/AFTER|禁用審核數據庫對象時觸發      |
+|12 |RENAME                 |BEFORE/AFTER|為數據庫對象重命名時觸發      |
+|13 |REVOKE                 |BEFORE/AFTER|用戶撤銷權限時觸發            |
+|14 |TRUNCATE               |BEFORE/AFTER|截斷數據表時觸發              |
+-------------------------------------------------------------------------
+
+常用的事件屬性函數
+--------------------------------------------------------------------------------
+|No.|事件屬性函數                  |描述                                       |
+--------------------------------------------------------------------------------
+|1  |ORA_CLIENT_IP_ADDRESS         |用於返回客戶端的IP地址                     |
+--------------------------------------------------------------------------------
+|2  |ORA_DATABASE_NAME             |用於返回當前數據庫名                       |
+--------------------------------------------------------------------------------
+|3  |ORA_DICT_OBJ_NAME             |用於返回DDL操作所對應的數據庫對象名        |
+--------------------------------------------------------------------------------
+|4  |ORA_DICT_OBJ_NAME_LIST        |用於返回字事件中被修改的對象名列表         |
+|   |(nameList OUT ORA_NAME_LIST_T)|                                           |
+--------------------------------------------------------------------------------
+|5  |ORA_DICT_OBJ_OWNER            |用於返回DDL操作所對應的對象所有者名        |
+--------------------------------------------------------------------------------
+|6  |ORA_DICT_OBJ_OWERR_LIST       |                                           |
+|   |(objList OUT ORA_NAME_LIST_T) |用於返回在事件中被修改對象的所有者列表     |
+--------------------------------------------------------------------------------
+|7  |ORA_DICT_OBJ_TYPE	           |用於返回DDL操作所對應的數據庫對象的類型    |
+--------------------------------------------------------------------------------
+|8  |ORA_GRANTEE                   |用於返回授權時事件授權者                   |
+|   |(nameList OUT ORA_NAME_LIST_T)|                                           |
+--------------------------------------------------------------------------------
+|9  |ORA_INSTANCE_NUM	           |用於返回歷程號                             |
+--------------------------------------------------------------------------------
+|10 |ORA_IS_ALTER_COLUMN           |                                           |
+|   |(columnName IN VARCHAR2)      |用於監測特定列是否被修改                   |
+--------------------------------------------------------------------------------
+|11 |ORA_IS_DROP_COLUMN            |                                           |
+|   |(columnName IN VARCHAR2)	   |用於檢測特定列是否被刪除                   |
+--------------------------------------------------------------------------------
+|12 |ORA_IS_SERVERERROR            |                                           |
+|   |(errorCode NUMBER)            |用於檢測是否返回了特定ORACLE錯誤           |
+--------------------------------------------------------------------------------
+|13 |ORA_LOGIN_USER	               |用於返回登錄用戶名                         |
+--------------------------------------------------------------------------------
+|14 |ORA_SYSEVENT                  |用於返回觸發的類型                         |
+--------------------------------------------------------------------------------
+|15 |ORA_DES_ENCRYPTED_PASSWORD    |取得加密後的密碼內容，返回的數據類型為     |
+|   |                              |VARCHAR2                                   |
+--------------------------------------------------------------------------------
+|16 |ORA_IS_CREATING_NESTED_TABLE  |如果創建一個嵌套表，返回數據類型為BOOLEAN  |
+--------------------------------------------------------------------------------
+|17 |ORA_REVOKE                    |返回撤銷的權限或角色列表                   |
+|   |(nameList OUT ORA_NAME_LIST_T)|                                           |
+--------------------------------------------------------------------------------
+|18 |ORA_SERVER_ERROR(point NUMBER)|返回錯誤堆棧訊息中的錯誤號，其中1為錯誤堆棧|
+|   |                              |頂端，返回的數據類型為NUMBER               |
+--------------------------------------------------------------------------------
+|19 |ORA_SERVER_ERROR_MSG          |返回錯誤堆棧訊息中的錯誤訊息，其中1為錯誤堆|
+|   |                              |棧頂端，返回的數據類型為VARCHAR2           |
+--------------------------------------------------------------------------------
+*/
+
+
+-- ex:禁止scott用戶的所有DDL操作
+CREATE OR REPLACE TRIGGER scott_forbid_trigger
+BEFORE DDL 
+ON SCHEMA 
+BEGIN 
+ RAISE_APPLICATION_ERROR(-20007,'scott用戶禁止使用任何的DDL操作!');
+END;
+/
+
+
+-- ex:由於觸發器的存在，用戶創建序列無法成功
+CREATE SEQUENCE orcl_seq;
+-- 錯誤報告:SQL 錯誤: ORA-00604: 遞迴 SQL 層次 1 發生錯誤
+-- ORA-20007: scott用戶禁止使用任何的DDL操作!
+
+
+-- ex:建立能夠保存操作各個數據庫對象的日誌
+-- 步驟一:創建保存訊息的數據表
+DROP TRIGGER scott_forbid_trigger;
+DROP TABLE object_log PURGE;
+DROP SEQUENCE object_log_seq;
+CREATE SEQUENCE object_log_seq;
+CREATE TABLE object_log(
+ oid NUMBER,
+ username VARCHAR2(50) NOT NULL,
+ operatedate DATE NOT NULL,
+ objecttype VARCHAR2(50) NOT NULL,
+ objectowner VARCHAR2(50) NOT NULL,
+ CONSTRAINT pk_oid PRIMARY KEY(oid)
+);
+
+
+-- 步驟二:使用sys用戶，創建(簡單的系統級)觸發器進行紀錄
+CONN sys/change_on_install AS SYSDBA;
+CREATE OR REPLACE TRIGGER object_trigger 
+AFTER CREATE OR DROP OR ALTER -- 在資料庫進行DDL操作之後
+ON DATABASE 
+DECLARE  
+BEGIN 
+ INSERT INTO c##scott.object_log(
+  oid,
+  username,
+  operatedate,
+  objecttype,
+  objectowner
+ ) 
+ VALUES (
+  c##scott.object_log_seq.nextval,
+  ORA_LOGIN_USER,
+  SYSDATE,
+  ORA_DICT_OBJ_TYPE,
+  ORA_DICT_OBJ_OWNER
+ );
+END;
+/
+
+
+-- 現在可以針對c##scott用戶下的所有對象進行追蹤。
+-- ex:刪除無用數據表
+SELECT * FROM tab;
+DROP TABLE mytab PURGE;
+DROP TABLE advice PURGE;
+-- use sys drop table
+DROP TABLE c##scott.mydept PURGE;
+
+
+-- ex:查看訊息表
+SELECT * FROM object_log;
+
+
+-- ex:禁止修改emp表的empno主鍵和dpetno外鍵的定義結構
+-- 分析:要進行修改一定使用ALTER語句完成，而修改表的欄位也只有empno和deptno。
+-- 如果要知道一個表所有的直行訊息，可以使用all_tab_columns數據字典。
+SELECT * FROM all_tab_columns WHERE table_name='EMP' AND owner='C##SCOTT';
+
+CREATE OR REPLACE TRIGGER emp_alter_trigger 
+BEFORE ALTER  
+ON SCHEMA  
+DECLARE 
+ -- 操作的所有者及操作的表名稱由外部傳遞
+ CURSOR emp_column_cur(
+  p_tableOwner all_tab_columns.owner%TYPE,
+  p_tableName all_tab_columns.table_name%TYPE
+ ) 
+ IS 
+ SELECT column_name FROM all_tab_columns 
+ WHERE owner=p_tableOwner AND table_name=p_tableName;
+BEGIN 
+ -- 如果操作的是數據表
+ IF ORA_DICT_OBJ_TYPE='TABLE' THEN
+   FOR empColumnRow 
+   IN emp_column_cur(ORA_DICT_OBJ_OWNER, ORA_DICT_OBJ_NAME) LOOP 
+    IF ORA_IS_ALTER_COLUMN(empColumnRow.column_name) THEN 
+	 -- 如果empno欄位要被修改
+	 IF empColumnRow.column_name='EMPNO' THEN 
+	  RAISE_APPLICATION_ERROR(-20007,'empno欄位不允許修改');
+	 END IF;
+	 
+	 -- 如果deptno欄位要被修改
+	 IF empColumnRow.column_name='DEPTNO' THEN 
+	  RAISE_APPLICATION_ERROR(-20008,'deptno欄位不允許修改');
+	 END IF;
+	END IF;
+	
+	IF ORA_IS_DROP_COLUMN(empColumnRow.column_name) THEN 
+	 -- 如果empno欄位要被刪除
+	 IF empColumnRow.column_name='EMPNO' THEN 
+	  RAISE_APPLICATION_ERROR(-20009,'empno欄位不允許刪除');
+	 END IF;
+	 
+	 -- 如果deptno欄位要被刪除
+	 IF empColumnRow.column_name='DEPTNO' THEN 
+	  RAISE_APPLICATION_ERROR(-20010,'deptno欄位不允許刪除');
+	 END IF;
+	END IF;
+   END LOOP;
+ END IF;
+END;
+/
+
+
+-- ex:測試修改empno欄位
+ALTER TABLE emp MODIFY(empno NUMBER(6));
+-- 錯誤報告:SQL 錯誤: ORA-00604: 遞迴 SQL 層次 1 發生錯誤
+-- ORA-20007: empno欄位不允許修改
+
+-- ex:測試刪除deptno欄位
+ALTER TABLE emp DROP COLUMN deptno;
+-- 錯誤報告:SQL 錯誤: ORA-00604: 遞迴 SQL 層次 1 發生錯誤
+-- ORA-20010: deptno欄位不允許刪除
+--============================================================================--
+--                                                                            --
+/* ※觸發器-系統觸發器                                                        */ 
+--                                                                            --
+--============================================================================--
+-- 說明:系統觸發器用於監視數據庫服務的打開、關閉、錯誤等訊息的取得，或者是監控
+-- 用戶的行為操作等。
+/*
+語法:
+CREATE [OR REPLACE] TRIGGER 觸發器名稱
+[BEFORE|AFTER][數據庫事件] ON [DATABASE|SCHEMA]
+[WHEN 觸發條件]
+[DECLARE]
+ [程序聲明部份;] 
+BEGIN
+ 程序代碼部份;
+END[觸發器名稱];
+/
+
+系統觸發器事件:
+-------------------------------------------------
+|No.|事件       |觸發時機|描述                  |
+|1  |STARTUP    |AFTER   |數據庫實例啟動之後觸發|
+|2  |SHUTDOWN   |BEFORE  |數據庫實例關閉之前觸發|
+|3  |SERVERERROR|AFTER   |出現錯誤時觸發        |
+|4  |LOGON      |AFTER   |用戶登入後觸發        |
+|5  |LOGOFF     |BEFORE  |用戶註銷前觸發        |
+-------------------------------------------------
+*/ 
+
+-- ex:登入日誌功能
+-- 步驟一:使用sys，創建用戶登入日誌數據表
+DROP SEQUENCE user_log_seq;
+DROP TABLE user_log PURGE;
+CREATE SEQUENCE user_log_seq;
+CREATE TABLE user_log(
+ logid NUMBER,
+ username VARCHAR2(50) NOT NULL,
+ logondate DATE,
+ logoffdate DATE,
+ ip VARCHAR2(20),
+ logtype VARCHAR2(20),
+ CONSTRAINT pk_logid PRIMARY KEY(logid)
+);
+-- 步驟二:使用sys，創建用戶登入觸發器
+CREATE OR REPLACE TRIGGER logon_trigger 
+AFTER LOGON -- 用戶登入後觸發
+ON DATABASE 
+BEGIN 
+ INSERT INTO user_log(logid, username, logondate, ip, logtype)
+ VALUES (
+  user_log_seq.nextval,
+  ORA_LOGIN_USER,
+  SYSDATE,
+  ORA_CLIENT_IP_ADDRESS,
+  'LOGON'
+ );
+END;
+/
+-- 步驟三:使用sys，創建用戶註銷觸發器
+CREATE OR REPLACE TRIGGER logoff_trigger 
+BEFORE LOGOFF -- 用戶註銷前觸發
+ON DATABASE 
+BEGIN 
+ INSERT INTO user_log(logid, username, logoffdate, ip, logtype)
+ VALUES (
+  user_log_seq.nextval,
+  ORA_LOGIN_USER,
+  SYSDATE,
+  ORA_CLIENT_IP_ADDRESS,
+  'LOGOFF'
+ );
+END;
+/
+-- 步驟四:sqlplus反覆操作CONN
+CONN sys/change_on_install AS SYSDBA;
+CONN c##scott/tiger;
+SELECT * FROM user_log;
+
+
+-- 如果要進行數據庫維護，有一大部份是需要經常的進行系統的關閉與重新啟動。
+-- ex:系統啟動和關閉日誌功能
+-- 步驟一:使用sys，創建數據庫事件紀錄表
+DROP SEQUENCE db_event_log_seq;
+DROP TABLE db_event_log PURGE;
+CREATE SEQUENCE db_event_log_seq;
+CREATE TABLE db_event_log(
+ eventid NUMBER,
+ eventType VARCHAR2(50) NOT NULL, 
+ eventDate DATE,
+ eventUser VARCHAR2(20), 
+ CONSTRAINT pk_eventid PRIMARY KEY(eventid)
+);
+-- 步驟二:使用sys，創建啟動紀錄的觸發器
+CREATE OR REPLACE TRIGGER startup_trigger 
+AFTER STARTUP 
+ON DATABASE 
+BEGIN 
+ INSERT INTO db_event_log(eventid, eventType, eventDate, eventUser)
+ VALUES (
+  db_event_log_seq.nextval,
+  'STARTUP',
+  SYSDATE,
+  ORA_LOGIN_USER
+ );
+END;
+/
+-- 步驟三:使用sys，創建關閉紀錄的觸發器
+CREATE OR REPLACE TRIGGER shutdown_trigger 
+BEFORE SHUTDOWN 
+ON DATABASE 
+BEGIN 
+ INSERT INTO db_event_log(eventid, eventType, eventDate, eventUser)
+ VALUES (
+  db_event_log_seq.nextval,
+  'SHUTDOWN',
+  SYSDATE,
+  ORA_LOGIN_USER
+ );
+END;
+/
+-- 步驟四:使用sys，sqlplus操作停止和啟動數據庫實例指令
+--SHUTDOWN ABORT;
+SHUTDOWN IMMEDIATE;
+STARTUP ;
+SELECT * FROM db_event_log;
+
+
+-- 在進行數據庫的SQL編寫時，經常會出現各種錯誤。
+-- ex:錯誤訊息日誌
+-- 步驟一:使用sys，創建紀錄錯誤訊息數據表
+DROP SEQUENCE db_error_seq;
+DROP TABLE db_error PURGE;
+CREATE SEQUENCE db_error_seq;
+CREATE TABLE db_error(
+ eid NUMBER,
+ usename VARCHAR2(50), 
+ errorDate DATE,
+ dbname VARCHAR2(50),
+ content CLOB,
+ CONSTRAINT pk_eid PRIMARY KEY(eid)
+);
+-- 步驟二:使用sys，創建觸發器
+CREATE OR REPLACE TRIGGER error_trigger 
+AFTER SERVERERROR  
+ON DATABASE 
+BEGIN 
+ INSERT INTO db_error(eid, usename, errorDate, dbname, content)
+ VALUES (
+  db_error_seq.nextval,
+  ORA_LOGIN_USER,
+  SYSDATE,
+  ORA_DATABASE_NAME,
+  DBMS_UTILITY.format_error_stack
+ );
+END;
+/
+-- 步驟三:使用sys或c##scott編寫錯誤語句
+SELECT * FROM orcl;
+
+
+-- 步驟四:使用sys查看錯誤訊息數據表
+SELECT * FROM db_error;
+--============================================================================--
+--                                                                            --
+/* ※觸發器-管理觸發器                                                        */ 
+--                                                                            --
+--============================================================================--
+-- ➤查看觸發器
+-- 說明:所有的數據庫對象一定會在數據字典中進行查詢，對於觸發器，用戶同樣可以使用
+-- 三個數據字典查看訊息:USER_TRIGGERS、ALL_TRIGGERS、DBA_TRIGGERS。
+-- ex:使用c##scott用戶登入，查看user_triggers數據字典
+SELECT trigger_name, status, trigger_type, table_name, triggering_event, 
+trigger_body FROM user_triggers;
+
+
+-- ➤禁用/啟用觸發器
+-- 說明:當觸發器創建完成之後的默認狀態為啟用，如果要修改觸發器的操作狀態，可以
+-- 使用下面的語法操作。
+/*
+ALTER TRIGGER 觸發器名稱 [DISABLE|ENABLE];
+在修改觸發器時提供了兩種觸發器的操作狀態:
+①ENABLE(有效狀態):當觸發事件發生時，處於有效狀態的數據庫觸發器將被觸發。
+②DISABLE(無效狀態):當觸發事件發生時，處於無效狀態的數據庫觸發器TRIGGER將
+不會被觸發，相當於觸發器不存在。
+
+禁用/啟用一張表的全部觸發器
+ALTER TABLE [schema.]表名稱 [DISABLE|ENABLE] ALL TRIGGERS;
+*/
+-- ex:將emp_alter_trigger觸發器修改為禁用狀態
+ALTER TRIGGER emp_alter_trigger DISABLE;
+SELECT trigger_name, status FROM user_triggers;
+
+
+-- ex:禁用emp表的全部觸發器
+ALTER TABLE emp DISABLE ALL TRIGGERS;
+SELECT table_name, trigger_name, status FROM user_triggers;
+
+-- ex:啟用emp表的全部觸發器
+ALTER TABLE emp ENABLE ALL TRIGGERS;
+SELECT table_name, trigger_name, status FROM user_triggers;
+
+
+-- ➤刪除觸發器
+-- ex:刪除觸發器
+DROP TRIGGER emp_alter_trigger;
+SELECT table_name, trigger_name, status FROM user_triggers;
+--============================================================================--
+--                                                                            --
+/* ※觸發器-觸發器中調用子程序                                                */ 
+--                                                                            --
+--============================================================================--
+-- 說明:一個觸發器只能夠編寫最多32K大小的代碼，如果此時要編寫的代碼較多，則可以
+-- 將這些代碼定義在過程或函數中，觸發器只需要完成調用即可。
+
+-- ex:在每月10號允許辦理新進人員入職，同時入職的員工工資不能超過公司的平均工資
+-- 編寫一個過程，實現每月10號的限制
+CREATE OR REPLACE PROCEDURE emp_update_date_proc 
+AS
+ v_currentdate VARCHAR2(20);
+BEGIN 
+ SELECT TO_CHAR(SYSDATE,'DD') INTO v_currentdate FROM dual;
+ IF v_currentdate!='10' THEN 
+  RAISE_APPLICATION_ERROR(-20006, '在每月10號才允許辦理新進人員入職');
+ END IF;
+END;
+/
+-- 編寫一個函數，查出公司平均工資
+CREATE OR REPLACE FUNCTION emp_avg_sal_fun 
+RETURN NUMBER 
+AS
+ v_avgSal emp.sal%TYPE;
+BEGIN 
+ SELECT AVG(sal) INTO v_avgSal FROM emp; 
+ RETURN v_avgSal;
+END;
+/
+-- 在觸發器中使用以上兩個子程序
+CREATE OR REPLACE TRIGGER forbid_emp_trigger 
+BEFORE INSERT 
+ON emp
+FOR EACH ROW 
+BEGIN 
+ -- 調用過程
+ emp_update_date_proc;
+ 
+ -- 判斷函數回傳值
+ IF :new.sal>emp_avg_sal_fun() THEN 
+  RAISE_APPLICATION_ERROR(-20007, '新進人員工資不得高於公司平均工資');
+ END IF; 
+END;
+/
+-- 執行增加員工
+INSERT INTO emp(empno, ename, job, sal, hiredate, mgr, comm, deptno) 
+VALUES (3333, 'KEN', 'CLERK', 8888, SYSDATE, 7369, NULL, 20);
+-- 錯誤報告:SQL 錯誤: ORA-20006: 在每月10號才允許辦理新進人員入職
+-- 錯誤報告:SQL 錯誤: ORA-20007: 新進人員工資不得高於公司平均工資

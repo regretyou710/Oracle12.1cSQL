@@ -196,7 +196,7 @@ UPDATE v_emp20 SET deptno=40 WHERE empno=7369;
 -- SQL 錯誤: ORA-01402: 檢視 WITH CHECK OPTION where- 子句違反
 
 
--- ➤WITH CHECK OPTION子句
+-- ➤WITH READ ONLY子句
 -- 說明:讓視圖中所有的欄位不可更新，則可以透過WITH READ ONLY子句控制
 -- 語法
 -- CREATE [FPRCE|NOFORCE][OR REPLACE]VIEW 視圖名稱[(別名1,別名2...)]

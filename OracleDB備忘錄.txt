@@ -18,7 +18,6 @@ Database:orcl12c
 Connect as:SYSDBA
 */
 
-
 ----------------------------------------------------------------------------------
 -- Oracle sqlplus.exe常用操作命令
 
@@ -72,6 +71,11 @@ select * from all_users;
 
 -- 查看表單結構
 DESC "表單名稱";
+
+
+-- 停止和啟動數據庫實例指令
+SHUTDOWN ABORT;
+STARTUP;
 
 
 -- 在sqlplus.exe中調用本地端指令

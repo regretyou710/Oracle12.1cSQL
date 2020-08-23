@@ -1183,7 +1183,7 @@ DECLARE
  v_myexp EXCEPTION;
  PRAGMA EXCEPTION_INIT(v_myexp, -01410);
 BEGIN
- v_input_rowid := '&inputRowid'; -- 輸入一個ROW數據,www.roacle.com
+ v_input_rowid := '&inputRowid'; -- 輸入一個ROW數據,www.oracle.com
  IF LENGTH(v_input_rowid) != 18 THEN
   RAISE v_myexp; -- 拋出異常
  END IF;

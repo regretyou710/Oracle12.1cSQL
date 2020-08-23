@@ -438,7 +438,14 @@ SELECT * FROM department;
 
 -- ex:查看一個部門的全部項目訊息
 SELECT * FROM TABLE(
-SELECT projects FROM department WHERE did=20);
+SELECT projects FROM department WHERE did=10);
+
+
+/*
+-- ex:增加10部門的嵌套內容
+INSERT INTO TABLE(SELECT projects FROM department WHERE did=10) 
+VALUES (3,'WEB框架應用',600,TO_DATE('2013-02-19','YYYY-MM-DD'));
+*/
 
 
 -- ex:修改某個部門的一個項目訊息

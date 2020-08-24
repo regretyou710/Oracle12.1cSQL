@@ -6,7 +6,7 @@
 -- 說明:PL/SQL是Oracle在關係數據庫結構化查詢語言SQL基礎上擴展得到的一種過程化查
 -- 尋語言。SQL與編程語言支的不同在於，SQL沒有變量，SQL沒有流程控制(分支，循環)。
 -- 而PL/SQL是結構化的和過程化的結合體，而且最為重要的是，用戶執行多條SQL語句時
--- ，每條SQL語句都是逐一的發送給數據庫，而PL/SQL可以以次性將多條SQL語句一起發送
+-- ，每條SQL語句都是逐一的發送給數據庫，而PL/SQL可以一次性將多條SQL語句一起發送
 -- 給數據庫，減少網路流量。
 
 /*
@@ -1183,7 +1183,7 @@ DECLARE
  v_myexp EXCEPTION;
  PRAGMA EXCEPTION_INIT(v_myexp, -01410);
 BEGIN
- v_input_rowid := '&inputRowid'; -- 輸入一個ROW數據,www.roacle.com
+ v_input_rowid := '&inputRowid'; -- 輸入一個ROW數據,www.oracle.com
  IF LENGTH(v_input_rowid) != 18 THEN
   RAISE v_myexp; -- 拋出異常
  END IF;

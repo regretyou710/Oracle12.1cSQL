@@ -344,7 +344,7 @@ AS
   -- 定義索引表變量
  v_dept dept_index;
 
- -- 定義強類型游標變量(未實例化)
+ -- 定義強類型靜態游標變量(未實例化)
  CURSOR dept_cur RETURN dept%ROWTYPE;
  
  FUNCTION dept_insert_fun(
@@ -359,7 +359,7 @@ END;
 -- ex:定義包體，實現裡面的方法
 CREATE OR REPLACE PACKAGE BODY init_pkg
 AS 
- -- 實例化強類型游標
+ -- 實例化強類型靜態游標
  CURSOR dept_cur RETURN dept%ROWTYPE IS SELECT * FROM dept;
  
  FUNCTION dept_insert_fun(

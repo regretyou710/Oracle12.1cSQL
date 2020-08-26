@@ -187,7 +187,7 @@ CREATE OR REPLACE TRIGGER forbid_emp_trigger
 AFTER UPDATE OR INSERT OF ename,sal,comm -- 針對特定欄位觸發
 ON emp -- 觸發對象
 DECLARE 
- -- 2.定義游標，找到每一橫列紀錄
+ -- 2.定義弱類型靜態游標，找到每一橫列紀錄
  CURSOR cur_emp IS SELECT * FROM emp;
  
  -- 3.保存一橫列紀錄
@@ -240,7 +240,7 @@ CREATE OR REPLACE TRIGGER forbid_emp_trigger
 AFTER UPDATE OR INSERT OF ename,sal,comm -- 針對特定欄位觸發
 ON emp -- 觸發對象
 DECLARE 
- -- 2.定義游標，找到每一橫列紀錄
+ -- 2.定義弱類型靜態游標，找到每一橫列紀錄
  CURSOR cur_emp IS SELECT * FROM emp;
  
  -- 3.保存一橫列紀錄
@@ -888,7 +888,7 @@ VALUES (8103, 'judy', 'salesman', SYSDATE, 1680, null, 7566, 20);
 /* ※觸發器-instead-of觸發器                                                  */ 
 --                                                                            --
 --============================================================================--
--- 簡述:透過替代觸發器解決更新視圖十多的數據表一起更新的問題。
+-- 簡述:透過替代觸發器解決更新視圖時多個數據表一起更新的問題。
 /*
 創建語法:
 CREATE [OR REPLACE] TRIGGER 觸發器名稱
@@ -1348,6 +1348,7 @@ BEFORE ALTER
 ON SCHEMA  
 DECLARE 
  -- 操作的所有者及操作的表名稱由外部傳遞
+ -- 弱類型參數游標
  CURSOR emp_column_cur(
   p_tableOwner all_tab_columns.owner%TYPE,
   p_tableName all_tab_columns.table_name%TYPE

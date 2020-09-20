@@ -31,6 +31,7 @@ SELECT * FROM emp WHERE LENGTH(ename)=5;
 
 -- ➤SUBSTR(欄位,起始索引值,結束索引值):範圍內字串
 -- ➤SUBSTR(欄位,起始索引值):起始索引值到結尾內字串
+-- note:Oracle數據庫中，下標都是從1開始，如果設置為0也會自動將其轉換為1。
 -- ex:查詢員工姓名前三個字母是'JAM'的員工訊息
 SELECT * FROM emp WHERE SUBSTR(ename,0,3)='JAM';
 

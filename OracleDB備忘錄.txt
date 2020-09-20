@@ -136,3 +136,9 @@ ORASTAT =
     )
   )
 ----------------------------------------------------------------------------------
+exp system/manager@orcl12c full=y file=C:\Users\user\Desktop\Oracle12.1cSQL\orcl12c_20200901.dmp 
+
+exp system/manager file=C:\Users\user\Desktop\Oracle12.1cSQL\orcl12c_20200901.dmp rows=y owner=c##scott
+
+imp  system/manager full=y  file=C:\Users\user\Desktop\Oracle12.1cSQL\orcl12c_20200901.dmp ignore=y
+----------------------------------------------------------------------------------

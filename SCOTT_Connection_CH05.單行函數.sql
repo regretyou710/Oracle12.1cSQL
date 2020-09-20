@@ -171,7 +171,7 @@ SELECT ename, empno, job, hiredate, LAST_DAY(hiredate)
 FROM emp WHERE hiredate=LAST_DAY(hiredate)-3;
 
 
--- ➤MONTHS_BETWEEN():取的兩個日期之間所經歷過的月份間格
+-- ➤MONTHS_BETWEEN():取得兩個日期之間所經歷過的月份間隔
 -- ex:查詢出每個員工編號、姓名、雇用日期、雇用的月數及年份
 SELECT empno, ename, hiredate,
 TRUNC(MONTHS_BETWEEN(SYSDATE,hiredate)) 雇用總月數,

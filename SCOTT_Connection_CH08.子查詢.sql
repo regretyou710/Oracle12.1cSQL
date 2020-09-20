@@ -117,7 +117,7 @@ SELECT * FROM emp WHERE empno NOT IN (SELECT mgr FROM emp);
 -- ANY在使用中有三種型式:
 -- ①=ANY:表示與子查詢中的每個元素進行比較，功能與IN類似(然而<>ANY不等價於NOT IN)。
 -- ②>ANY:比子查詢中返回結果的最小的要大(包含>=ANY)。
--- ③<ANY:比子查詢中返回結果的最大的要小(包含>=ANY)。
+-- ③<ANY:比子查詢中返回結果的最大的要小(包含<=ANY)。
 -- 補充:SOME操作符，其功能與ANY相同，Oracle中後來添加的。
 
 -- ex:查找出每個部門經理的最低工資(假設情境:一個部門有多個經理)
@@ -143,8 +143,8 @@ WHERE sal<ANY (SELECT MIN(sal) FROM emp WHERE job='MANAGER' GROUP BY deptno);
 -- ➤ALL操作符
 -- ALL在使用中有三種型式:
 -- ①<>All:等價於NOT IN(但是=ALL並不等價於IN)。
--- ②>ANY:比子查詢中最大值還要大(包含>=ALL)。
--- ③<ANY:比子查詢中最小值還要小(包含<=ALL)。
+-- ②>ALL:比子查詢中最大值還要大(包含>=ALL)。
+-- ③<ALL:比子查詢中最小值還要小(包含<=ALL)。
 
 -- ex:查找出每個部門經理的最低工資(假設情境:一個部門有多個經理)
 SELECT MIN(sal) FROM emp WHERE job='MANAGER' GROUP BY deptno;

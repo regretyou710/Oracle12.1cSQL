@@ -291,7 +291,7 @@ HAVING COUNT(e.empno)>1
 -- 步驟一:顯示非銷售人員工作名稱
 SELECT e.job FROM emp e WHERE e.job!='SALESMAN';
 -- 步驟二:從事同一工作員工的月工資的總和，進行統計分組
-SELECT e.job , SUM(e.sal) 工資總和 FROM emp e WHERE e.job!='CLERK' GROUP BY e.job;
+SELECT e.job , SUM(e.sal) 工資總和 FROM emp e WHERE e.job!='SALESMAN' GROUP BY e.job;
 -- 步驟三:針對分組後的工資總和進行過濾與排序
 SELECT 
 e.job, 

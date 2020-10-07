@@ -313,7 +313,7 @@ t.maxsal, t.minsal
 FROM emp e, 
 (SELECT deptno dno, MAX(sal) maxsal , MIN(sal) minsal 
 FROM emp GROUP BY deptno) t
-WHERE deptno=(SELECT deptno FROM dept WHERE dname='SALES') 
+WHERE e.deptno=(SELECT deptno FROM dept WHERE dname='SALES') 
 AND e.deptno=t.dno;
 
 
